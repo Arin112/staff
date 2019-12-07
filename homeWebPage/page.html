@@ -66,9 +66,10 @@ $.fn.in = 	function(){return this.find(":last-child").last();}
 		.html('<a href="'+((ref.startsWith("http://") || ref.startsWith("https://"))?
 			ref:"http://"+ref)+'" num="'+n+'">'+
 			ref.replace("http://", '').replace("https://", "")+'</a>')
+		.pTag("div").css({display:"inline-block", float:"right", "margin-right":"10px"})
 		.pTag("input").attr({type:"button", value:"X"}).click(function(){
-			localStorage.removeItem("ref"+$(this).parent().find("a").attr("num"));
-			$(this).parent().remove();
+			localStorage.removeItem("ref"+$(this).parent().parent().find("a").attr("num"));
+			$(this).parent().parent().remove();
 		});
 	};
 	
