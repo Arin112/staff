@@ -67,7 +67,7 @@ $.fn.in = 	function(){return this.find(":last-child").last();}
 			ref:"http://"+ref)+'" num="'+n+'">'+
 			ref.replace("http://", '').replace("https://", "")+'</a>')
 		.pTag("div").css({display:"inline-block", float:"right", "margin-right":"10px"})
-		.pTag("input").attr({type:"button", value:"X"}).click(function(){
+		.pTag("input").css({height:"18px"}).attr({type:"button", value:"X"}).click(function(){
 			localStorage.removeItem("ref"+$(this).parent().parent().find("a").attr("num"));
 			$(this).parent().parent().remove();
 		});
