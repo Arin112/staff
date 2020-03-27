@@ -10,7 +10,7 @@ $.fn.pTag = function(name){return this.first().append("<"+name+"></"+name+">").f
 $.fn.tag = 	function(name){return this.first().append("<"+name+"></"+name+">");}
 $.fn.apTag =function(name){return this.first().after("<"+name+"></"+name+">").next();}
 $.fn.atag = function(name){return this.first().after("<"+name+"></"+name+">");}
-$.fn.out = 	function(){return this.end().end();}
+$.fn.out = 	function(){return this.parent();}
 $.fn.in = 	function(){return this.find(":last-child").last();}
 </script>
 </head>
