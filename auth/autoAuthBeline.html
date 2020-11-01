@@ -1,0 +1,40 @@
+<html>
+<head><title>auth</title></head>
+<body>
+
+<input id="sleepTime" type="text"> minutes
+<input id="btn" type="button" onclick="f()" value="go">
+<p id="eta"></p>
+<iframe id="frame" src="authBeline.html"></iframe>
+<br>
+<input type="button" value="don't close" onclick="st=true">
+<script>
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+st=false;
+(async function(){await sleep(7000); if(!st)window.location.href = 'file:///F:/denis/git/stuff/homeWebPage/page.html';})()
+
+async function f(){
+	while(1){
+		//await sleep(5000);
+		//alert(parseInt(sleepTime.value))
+		if(!isNaN(parseFloat(sleepTime.value))){
+			let fSTimeValue = parseFloat(sleepTime.value)
+			let total = 0;
+			while(total < fSTimeValue * 60){
+				eta.innerHTML = "eta: " + (fSTimeValue - total/60)+" minutes."
+				await sleep(1000);
+				total++;
+			}
+			frame.src = frame.src;
+		}else{
+			alert("'" + sleepTime.value + "' is NaN!")
+		}
+		frame.src = frame.src;
+	}
+}
+</script>
+<body>
+</html>
