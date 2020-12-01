@@ -1,4 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
- asdryftu
+    <head>
+		<meta charset="utf-8">
+        <title>Пример опросника</title><meta name="viewport" content="width=device-width"/>
+        <script src="https://unpkg.com/jquery"></script>
+        <script src="https://unpkg.com/survey-jquery@1.8.18/survey.jquery.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+        <link rel="stylesheet" href="https://unpkg.com/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+        
+	</head>
+    <body>
+        <div id="surveyElement" style="display:inline-block;width:70%;"></div>
+		<div id="surveyContainer" style="width:70%;margin-left:auto;margin-right: auto;"></div>
+		<div id="canvas-holder" style="width:40%;margin-left:auto;margin-right: auto;">
+			<canvas id="myChart"></canvas>
+		</div>
+        <script type="text/javascript">
+		Survey.StylesManager.applyTheme("bootstrap");
+		Survey.defaultBootstrapCss.navigationButton = "btn btn-green";
+		/*<link rel="stylesheet" href="./index.css">*/
+		let surveyJSON = {"pages":[{"name":"page1","elements":[{"type":"rating","name":"question1","title":"Оцените, насколько ваш начальник мудак по шкале от одного до десяти, где 1 - мой начальник не мудак, 10 - мой начальник полный мудак.","isRequired":true,"rateMax":10},{"type":"rating","name":"question2","title":"Оцените, насколько ваше мнение по вопросу, в котором вы компетентны, может повлиять на решения вашего начальника по соответствующему вопросу, где 1 - моё мнение никак не повлияет на решение, 10 - моё мнение будет учтено в полной мере.","isRequired":true,"rateMax":10}]}]}
+
+		function ShowRes(survey) {
+			//alert("The results are:" + JSON.stringify(survey.data));
+			let autocr = survey.data.question1*0.99 + survey.data.question2*0.01;
+			let democr = survey.data.question1*0.01 + survey.data.question2*0.99;
+			let sm = autocr + democr;
+			autocr = autocr/sm;
+			democr = democr/sm;
+			
+			window.chartColors = {
+				red: 'rgb(255, 99, 132)',
+				orange: 'rgb(255, 159, 64)',
+				yellow: 'rgb(255, 205, 86)',
+				green: 'rgb(75, 192, 192)',
+				blue: 'rgb(54, 162, 235)',
+				purple: 'rgb(153, 102, 255)',
+				grey: 'rgb(201, 203, 207)'
+			};
+			var config = {
+				type: 'doughnut',
+				data: {
+					datasets: [{
+						data: [
+							autocr,
+							democr,
+
+						],
+						backgroundColor: [
+							window.chartColors.red,
+							window.chartColors.blue,
+						],
+						label: 'Dataset 1'
+					}],
+					labels: [
+						'Автократический стиль',
+						'Демократический стиль',
+
+					]
+				},
+				options: {
+					responsive: true,
+					legend: {
+						position: 'top',
+					},
+					title: {
+						display: true,
+						text: 'Демократ или автократ?'
+					},
+					animation: {
+						animateScale: true,
+						animateRotate: true
+					}
+				}
+			};
+			var ctx = document.getElementById('myChart').getContext('2d');
+			if(window.myDoughnut){
+				window.myDoughnut.destroy();
+			}
+			window.myDoughnut = new Chart(ctx, config);
+		
+		
+			survey = new Survey.Model(surveyJSON);
+			$("#surveyContainer").Survey({
+				model: survey,
+				onComplete: ShowRes
+			});
+		}
+
+		let survey = new Survey.Model(surveyJSON);
+		$("#surveyContainer").Survey({
+			model: survey,
+			onComplete: ShowRes
+		});
+		</script>
+    </body>
 </html>
