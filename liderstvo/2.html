@@ -5,7 +5,8 @@
         <title>Пример опросника</title><meta name="viewport" content="width=device-width"/>
         <script src="https://unpkg.com/jquery"></script>
 		<link href="https://unpkg.com/survey-jquery@1.8.18/modern.css" type="text/css" rel="stylesheet" />
-        <link rel="stylesheet" href="https://unpkg.com/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://unpkg.com/survey-core@1.8.18/survey.css"/></head>
+		<link rel="stylesheet" href="https://unpkg.com/bootstrap@3.3.7/dist/css/bootstrap.min.css">
         <script src="https://unpkg.com/survey-jquery@1.8.18/survey.jquery.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 	</head>
@@ -19,7 +20,8 @@
         <script type="text/javascript">
 		let gl;
 		(async function momSorryIAmGlobalAsyncCaller(){
-		Survey.StylesManager.applyTheme("modern");
+		//Chart.defaults.global.legend.display = false;
+		Survey.StylesManager.applyTheme();
 		//Survey.StylesManager.applyTheme("bootstrap");
 		//Survey.StylesManager.applyTheme("modern");
 		//Survey.StylesManager.applyTheme('bootstrapmaterial');
@@ -64,6 +66,7 @@
 		function ShowRes(survey) {
 			//alert("The results are:" + JSON.stringify(survey.data));
 			characteristics.forEach((l, i, dat)=>{let sm = 0; usedQ.forEach(v=>{sm += survey.data['question'+(v-usedQ[0]+1)]*parseFloat(qData[v][l.idx])}); dat[i].val = sm})
+			characteristics.forEach((l, i, dat)=>{let mx = 0; usedQ.forEach(v=>{mx += 10*parseFloat(qData[v][l.idx])}); dat[i].max = mx})
 			console.log(qData)
 			console.log(survey.data)
 			console.log(characteristics)
@@ -89,7 +92,7 @@
 					datasets: [{
 						borderColor: window.chartColors.yellow,
 						fill: false,
-						data: [...characteristics].map(v=>v.val),
+						data: characteristics.filter(v=>v.max>0).map(v=>(v.val/v.max) * 100),
 						backgroundColor: [
 							window.chartColors.red,
 							window.chartColors.blue,
@@ -99,13 +102,16 @@
 							window.chartColors.purple,
 							window.chartColors.grey,
 						],
-						label: 'Характеристики кандидата'
+						label: 'Степень выраженности характеристики'
 					}],
-					labels: [...characteristics].map(v=>v.name)
+					labels: characteristics.filter(v=>v.max>0).map(v=>v.name)
 				},
 				options: {
+					maintainAspectRatio: true,
+					spanGaps: false,
 					responsive: true,
 					legend: {
+						display:false,
 						position: 'top',
 					},
 					title: {
@@ -115,6 +121,14 @@
 					animation: {
 						animateScale: true,
 						animateRotate: true
+					},
+					scale: {
+						ticks: {
+							max: 100,
+							min: 0,
+							//stepSize: 0.5,
+							beginAtZero:true
+						}
 					}
 				}
 			};
