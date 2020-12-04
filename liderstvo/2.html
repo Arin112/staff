@@ -63,7 +63,7 @@
 			}
 		});
 		
-		let surveyJSON = {"pages":[{"name":"page1","elements":[{"type":"rating","name":"question1","title":"Оцените, насколько ваш начальник мудак по шкале от одного до десяти, где 1 - мой начальник не мудак, 10 - мой начальник полный мудак.","isRequired":true,"rateMax":10},{"type":"rating","name":"question2","title":"Оцените, насколько ваше мнение по вопросу, в котором вы компетентны, может повлиять на решения вашего начальника по соответствующему вопросу, где 1 - моё мнение никак не повлияет на решение, 10 - моё мнение будет учтено в полной мере.","isRequired":true,"rateMax":10}]}]}
+		let surveyJSON = {questionsOrder: "random","pages":[{"name":"page1","elements":[{"type":"rating","name":"question1","title":"Оцените, насколько ваш начальник мудак по шкале от одного до десяти, где 1 - мой начальник не мудак, 10 - мой начальник полный мудак.","isRequired":true,"rateMax":10},{"type":"rating","name":"question2","title":"Оцените, насколько ваше мнение по вопросу, в котором вы компетентны, может повлиять на решения вашего начальника по соответствующему вопросу, где 1 - моё мнение никак не повлияет на решение, 10 - моё мнение будет учтено в полной мере.","isRequired":true,"rateMax":10}]}]}
 		/* https://spreadsheets.google.com/feeds/cells/1hxlkL-pbx1JRfxPziwtPzMH5JM30mgsF6iW11-ySijs/1/public/values?alt=json-in-script */
 		
 		let response = await fetch('https://spreadsheets.google.com/feeds/cells/1hxlkL-pbx1JRfxPziwtPzMH5JM30mgsF6iW11-ySijs/1/public/values?alt=json-in-script');
