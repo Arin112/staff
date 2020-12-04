@@ -126,13 +126,6 @@
 			
 			let sumLiderTotal = liderStyle.reduce((a, b)=>a.val+b.val)
 			liderStyle.forEach((l, i, dat)=>{dat[i].val /= sumLiderTotal})
-			//console.log(srData)
-			
-			// console.log(qData)
-			// console.log(survey.data)
-			//console.log(characteristics)
-			// console.log(usedQ, characteristics)
-			//console.log(liderStyle)
 			
 			window.chartColors = {
 				red: 'rgb(255, 99, 132)',
@@ -253,6 +246,7 @@
 				model: survey,
 				onComplete: ShowRes
 			});
+			window.scrollTo(0,document.body.scrollHeight);
 		}
 
 		let survey = new Survey.Model(surveyJSON);
