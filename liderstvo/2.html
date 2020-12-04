@@ -14,11 +14,14 @@
         <div id="surveyElement" style="display:inline-block;width:70%;"></div>
 		<div id="results" style="width:70%;margin-left:auto;margin-right: auto;"></div>
 		<div id="surveyContainer" style="width:70%;margin-left:auto;margin-right: auto;"></div>
-		<div id="canvas-holder" style="width:40%;margin-left:auto;margin-right: auto;">
+		<div id="canvas-holder" style="display:block;width:40%;margin-left:auto;margin-right: auto;">
 			<canvas id="myChart"></canvas>
 		</div>
+		<div id="canvas-holder2" style="display:block;height:30px;width:40%;margin-bottom:180px;margin-top:40px;margin-left:auto;margin-right: auto;">
+			<canvas id="ChartLider"></canvas>
+		</div>
         <script type="text/javascript">
-		let gl;
+		//let gl;
 		(async function momSorryIAmGlobalAsyncCaller(){
 		//Chart.defaults.global.legend.display = false;
 		Survey.StylesManager.applyTheme();
@@ -31,8 +34,11 @@
 		/* https://spreadsheets.google.com/feeds/cells/1hxlkL-pbx1JRfxPziwtPzMH5JM30mgsF6iW11-ySijs/1/public/values?alt=json-in-script */
 		
 		let response = await fetch('https://spreadsheets.google.com/feeds/cells/1hxlkL-pbx1JRfxPziwtPzMH5JM30mgsF6iW11-ySijs/1/public/values?alt=json-in-script');
+		let responseSrodstvo = await fetch('https://spreadsheets.google.com/feeds/cells/1hxlkL-pbx1JRfxPziwtPzMH5JM30mgsF6iW11-ySijs/2/public/values?alt=json-in-script');
 		let spreadsheet = await response.text();
+		let sstSrodstvo = await responseSrodstvo.text();
 		spreadsheet = JSON.parse(spreadsheet.substring(28, spreadsheet.length-2))
+		sstSrodstvo = JSON.parse(sstSrodstvo.substring(28, sstSrodstvo.length-2))
 		let qData = {}
 		for(let i=0;i<spreadsheet.feed.entry.length;i+=1){
 			if(! qData[parseInt(spreadsheet.feed.entry[i].gs$cell.row)]){
@@ -40,8 +46,15 @@
 			}
 			qData[parseInt(spreadsheet.feed.entry[i].gs$cell.row)][parseInt(spreadsheet.feed.entry[i].gs$cell.col)] = spreadsheet.feed.entry[i].gs$cell.$t
 		}
+		let srData = {}
+		for(let i=0;i<sstSrodstvo.feed.entry.length;i+=1){
+			if(! srData[parseInt(sstSrodstvo.feed.entry[i].gs$cell.row)]){
+				srData[parseInt(sstSrodstvo.feed.entry[i].gs$cell.row)] = {}
+			}
+			srData[parseInt(sstSrodstvo.feed.entry[i].gs$cell.row)][parseInt(sstSrodstvo.feed.entry[i].gs$cell.col)] = sstSrodstvo.feed.entry[i].gs$cell.$t
+		}
 		
-		//console.log(qData)
+		//console.log(srData)
 		let qCurNum = 1
 		surveyJSON.pages[0].elements = new Array()
 		
@@ -57,25 +70,69 @@
 		}
 
 		characteristics = new Array()
-		
 		for (let i=5;qData[1][i];i+=1){
 			characteristics.push({name:qData[1][i], idx:i, val:0})
 		}
-
-		//alert(spreadsheet)
+		
+		liderStyle = new Array()
+		
+		for (let i=2;srData[1][i];i+=1){
+			liderStyle.push({name:srData[1][i], idx:i, val:0})
+		}
+		
+		for (let j=1;srData[j] && srData[j][2];j+=1){ // normalize
+			let sumLiderStyle = 0
+			for (let i=2;srData[1][i];i+=1){
+				sumLiderStyle += srData[j][i]
+			}
+			for (let i=2;srData[1][i];i+=1){
+				srData[j][i] /= sumLiderStyle
+			}
+		}
+		// alert(spreadsheet)
 		function ShowRes(survey) {
 			//alert("The results are:" + JSON.stringify(survey.data));
-			characteristics.forEach((l, i, dat)=>{let sm = 0; usedQ.forEach(v=>{sm += survey.data['question'+(v-usedQ[0]+1)]*parseFloat(qData[v][l.idx])}); dat[i].val = sm})
-			characteristics.forEach((l, i, dat)=>{let mx = 0; usedQ.forEach(v=>{mx += 10*parseFloat(qData[v][l.idx])}); dat[i].max = mx})
-			console.log(qData)
-			console.log(survey.data)
-			console.log(characteristics)
-			//console.log(usedQ, characteristics)
-			//let autocr = survey.data.question1*0.99 + survey.data.question2*0.01;
-			//let democr = survey.data.question1*0.01 + survey.data.question2*0.99;
-			//let sm = autocr + democr;
-			//autocr = autocr/sm;
-			//democr = democr/sm;
+			characteristics.forEach((l, i, dat)=>{
+				let sm = 0;
+				usedQ.forEach(v=>{
+					sm += survey.data['question'+(v-usedQ[0]+1)]*parseFloat(qData[v][l.idx])
+				});
+				dat[i].val = sm
+			})
+			characteristics.forEach((l, i, dat)=>{
+				let mx = 0;
+				usedQ.forEach(v=>{
+					mx += 10*parseFloat(qData[v][l.idx])
+				});
+				dat[i].max = mx
+			})
+			characteristics = characteristics.filter(v=>v.max>0)
+			
+			liderStyle.forEach((l, i, dat)=>{
+				let sm = 0;
+				characteristics.forEach(v=>{
+					sm += (v.val/v.max) * parseFloat(srData[2 + v.idx - characteristics[0].idx][l.idx])
+				})
+				dat[i].val = sm
+			})
+			
+			liderStyle.forEach((l, i, dat)=>{
+				let sm = 0;
+				characteristics.forEach(v=>{
+					sm += 1 * parseFloat(srData[2 + v.idx - characteristics[0].idx][l.idx])
+				})
+				dat[i].max = sm
+			})
+			
+			let sumLiderTotal = liderStyle.reduce((a, b)=>a.val+b.val)
+			liderStyle.forEach((l, i, dat)=>{dat[i].val /= sumLiderTotal})
+			//console.log(srData)
+			
+			// console.log(qData)
+			// console.log(survey.data)
+			//console.log(characteristics)
+			// console.log(usedQ, characteristics)
+			//console.log(liderStyle)
 			
 			window.chartColors = {
 				red: 'rgb(255, 99, 132)',
@@ -92,7 +149,7 @@
 					datasets: [{
 						borderColor: window.chartColors.yellow,
 						fill: false,
-						data: characteristics.filter(v=>v.max>0).map(v=>(v.val/v.max) * 100),
+						data: characteristics.map(v=>(v.val/v.max) * 100),
 						backgroundColor: [
 							window.chartColors.red,
 							window.chartColors.blue,
@@ -104,7 +161,7 @@
 						],
 						label: 'Степень выраженности характеристики'
 					}],
-					labels: characteristics.filter(v=>v.max>0).map(v=>v.name)
+					labels: characteristics.map(v=>v.name)
 				},
 				options: {
 					maintainAspectRatio: true,
@@ -137,7 +194,60 @@
 				window.myDoughnut.destroy();
 			}
 			window.myDoughnut = new Chart(ctx, config);
-		
+			
+			var configLiderRes = {
+				type: 'horizontalBar',
+				data: {
+					datasets: liderStyle.map((v, i)=>{return {
+						data: [v.val],
+						label: v.name,
+						backgroundColor : [
+							window.chartColors.red,
+							window.chartColors.blue,
+							window.chartColors.yellow,
+							window.chartColors.green,
+							window.chartColors.orange,
+							window.chartColors.purple,
+							window.chartColors.grey,
+						][i]
+					}}),
+					labels:['']
+				},
+				options: {
+					tooltips: {enabled: false},
+					maintainAspectRatio: true,
+					aspectRatio:4,
+					//spanGaps: false,
+					//responsive: true,
+					legend: {
+						//display:false,
+						position: 'top',
+					},
+					title: {
+						display: true,
+						text: 'Преобладающий лидерский стиль'
+					},
+					animation: {
+						animateScale: true,
+						animateRotate: true
+					},
+					scales: {
+						xAxes: [{
+							stacked: true
+						}],
+						yAxes: [{
+							stacked: true
+						}]
+					}
+				}
+			};
+			
+			let ctxLider = document.getElementById('ChartLider').getContext('2d');
+			if(window.wChartLider){
+				window.wChartLider.destroy();
+			}
+			window.wChartLider = new Chart(ctxLider, configLiderRes);
+			
 			survey = new Survey.Model(surveyJSON);
 			$("#surveyContainer").Survey({
 				model: survey,
