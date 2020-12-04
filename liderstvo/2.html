@@ -30,6 +30,39 @@
 		//Survey.StylesManager.applyTheme('bootstrapmaterial');
 		Survey.defaultBootstrapCss.navigationButton = "btn btn-green";
 		/*<link rel="stylesheet" href="./index.css">*/
+		
+		$(document).keypress(function(e) {
+			if(e.which == 17 && e.ctrlKey) {
+				let ln = $(".sv_q_rating_item_text").length
+				for(let i=0;i<ln/10;i+=1){
+					$(".sv_q_rating_item_text")[i*10 + Math.floor(Math.random()*10)].click()
+				}
+				
+			}
+		});
+		
+		$(document).keypress(function(e) {
+			//console.log(e.which)
+			if(e.which == 2 && e.ctrlKey) {
+				let ln = $(".sv_q_rating_item_text").length
+				for(let i=0;i<ln/10;i+=1){
+					$(".sv_q_rating_item_text")[i*10 + 9].click()
+				}
+				
+			}
+		});
+		
+		$(document).keypress(function(e) {
+			//console.log(e.which)
+			if(e.which == 26 && e.ctrlKey) {
+				let ln = $(".sv_q_rating_item_text").length
+				for(let i=0;i<ln/10;i+=1){
+					$(".sv_q_rating_item_text")[i*10].click()
+				}
+				
+			}
+		});
+		
 		let surveyJSON = {"pages":[{"name":"page1","elements":[{"type":"rating","name":"question1","title":"Оцените, насколько ваш начальник мудак по шкале от одного до десяти, где 1 - мой начальник не мудак, 10 - мой начальник полный мудак.","isRequired":true,"rateMax":10},{"type":"rating","name":"question2","title":"Оцените, насколько ваше мнение по вопросу, в котором вы компетентны, может повлиять на решения вашего начальника по соответствующему вопросу, где 1 - моё мнение никак не повлияет на решение, 10 - моё мнение будет учтено в полной мере.","isRequired":true,"rateMax":10}]}]}
 		/* https://spreadsheets.google.com/feeds/cells/1hxlkL-pbx1JRfxPziwtPzMH5JM30mgsF6iW11-ySijs/1/public/values?alt=json-in-script */
 		
@@ -107,7 +140,10 @@
 				dat[i].max = mx
 			})
 			characteristics = characteristics.filter(v=>v.max>0)
-			
+			//console.log(characteristics)
+			let maxChar = 0, minChar = 1e9;
+			characteristics.forEach(v=>{maxChar = maxChar<v.val/v.max?v.val/v.max:maxChar})
+			characteristics.forEach(v=>{minChar = minChar>v.val/v.max?v.val/v.max:minChar})
 			liderStyle.forEach((l, i, dat)=>{
 				let sm = 0;
 				characteristics.forEach(v=>{
@@ -136,13 +172,16 @@
 				purple: 'rgb(153, 102, 255)',
 				grey: 'rgb(201, 203, 207)'
 			};
+			//console.log(maxChar)
+			//console.log(characteristics.map(v=>(v.val/v.max)/maxChar * 100))
+			
 			var config = {
 				type: 'radar',
 				data: {
 					datasets: [{
 						borderColor: window.chartColors.yellow,
 						fill: false,
-						data: characteristics.map(v=>(v.val/v.max) * 100),
+						data: characteristics.map(v=>((v.val/v.max)/maxChar - minChar/maxChar*0.5) * 100),
 						backgroundColor: [
 							window.chartColors.red,
 							window.chartColors.blue,
