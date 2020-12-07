@@ -122,7 +122,7 @@
 		for (let i=5;qData[1][i];i+=1){
 			characteristics.push({name:qData[1][i], idx:i, val:0})
 		}
-		
+		//console.log(characteristics)
 		liderStyle = new Array()
 		
 		for (let i=2;srData[1][i];i+=1){
@@ -139,14 +139,34 @@
 			}
 		}
 		// alert(spreadsheet)
+		//console.log(characteristics)
 		function ShowRes(survey) {
+			//console.log(characteristics)
 			//alert("The results are:" + JSON.stringify(survey.data));
 			//console.log(qData)
 			//console.log(usedQ)
+			let maxQ=0, minQ=1e9
+			usedQ.forEach(v=>{
+					maxQ = survey.data['question'+(v-usedQ[0]+1)]>maxQ?survey.data['question'+(v-usedQ[0]+1)]:maxQ
+					minQ = survey.data['question'+(v-usedQ[0]+1)]<minQ?survey.data['question'+(v-usedQ[0]+1)]:minQ
+			});
+			let k = -10/(minQ-maxQ)
+			let b = -k*minQ
+			let fixedSurvey = {}
+			usedQ.forEach(v=>{
+				if(minQ!=maxQ){
+					fixedSurvey['question'+(v-usedQ[0]+1)] = k*survey.data['question'+(v-usedQ[0]+1)]+b
+					//fixedSurvey['question'+(v-usedQ[0]+1)] = survey.data['question'+(v-usedQ[0]+1)]
+					//console.log(fixedSurvey['question'+(v-usedQ[0]+1)], k*survey.data['question'+(v-usedQ[0]+1)]+b)
+				}else{
+					fixedSurvey['question'+(v-usedQ[0]+1)] = survey.data['question'+(v-usedQ[0]+1)]
+				}
+			});
+			gl = survey.data
 			characteristics.forEach((l, i, dat)=>{
 				let sm = 0;
 				usedQ.forEach(v=>{
-					sm += survey.data['question'+(v-usedQ[0]+1)]*parseFloat(qData[v][l.idx])
+					sm += fixedSurvey['question'+(v-usedQ[0]+1)]*parseFloat(qData[v][l.idx])
 				});
 				dat[i].val = sm
 			})
@@ -163,12 +183,17 @@
 			let maxChar = 0, minChar = 1e9;
 			characteristics.forEach(v=>{maxChar = maxChar<v.val/v.max?v.val/v.max:maxChar})
 			characteristics.forEach(v=>{minChar = minChar>v.val/v.max?v.val/v.max:minChar})
-			characteristics.forEach((l, i, dat)=>{(dat[i].val = (l.val/l.max)/maxChar - minChar/maxChar*0.5)})
 			//console.log(characteristics)
+			characteristics.forEach((l, i, dat)=>{(dat[i].val = (l.val/l.max)/maxChar - minChar/maxChar*0.5)})
+			characteristics.forEach((l, i, dat)=>{(dat[i].val = Math.round((dat[i].val + Number.EPSILON) * 100) / 100)})
+			
+			
+			console.log(characteristics)
 			liderStyle.forEach((l, i, dat)=>{
 				let sm = 0;
 				characteristics.forEach(v=>{
-					sm += (v.val/v.max) * parseFloat(srData[2 + v.idx - characteristics[0].idx][l.idx])
+					//sm += (v.val/v.max) * parseFloat(srData[2 + v.idx - characteristics[0].idx][l.idx])
+					sm += (v.val) * parseFloat(srData[2 + v.idx - characteristics[0].idx][l.idx])
 				})
 				console.log(sm)
 				dat[i].val = sm
@@ -182,17 +207,17 @@
 				dat[i].max = sm
 			})
 			//console.log(characteristics)
-			//console.log(liderStyle)
+			console.log(liderStyle)
 			let sumLiderTotal = liderStyle.reduce((a, b)=>a.val+b.val)
 			liderStyle.forEach((l, i, dat)=>{dat[i].val = dat[i].val/sumLiderTotal})
 			
 			//let diff = Math.abs(liderStyle[0].val-liderStyle[1].val)
 			//console.log(characteristics)
-			liderStyle.forEach((l, i, dat)=>{dat[i].val -= 0.4671082})
+			liderStyle.forEach((l, i, dat)=>{dat[i].val -= 0.4})
 			//
 			//sumLiderTotal = liderStyle.reduce((a, b)=>a.val+b.val)
 			//liderStyle.forEach((l, i, dat)=>{dat[i].val = dat[i].val/sumLiderTotal})
-			
+			//console.log(liderStyle)
 			sumLiderTotal = liderStyle.reduce((a, b)=>a.val+b.val)
 			liderStyle.forEach((l, i, dat)=>{dat[i].val = dat[i].val/sumLiderTotal})
 			
@@ -216,6 +241,8 @@
 			};
 			//console.log(maxChar)
 			//console.log(characteristics.map(v=>(v.val/v.max)/maxChar * 100))
+			//characteristics.forEach((l, i, dat)=>{(dat[i].val = (l.val/l.max)/maxChar - minChar/maxChar*0.5)})
+			
 			
 			var config = {
 				type: 'radar',
