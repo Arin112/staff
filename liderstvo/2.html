@@ -168,6 +168,7 @@
 				characteristics.forEach(v=>{
 					sm += (v.val/v.max) * parseFloat(srData[2 + v.idx - characteristics[0].idx][l.idx])
 				})
+				console.log(sm)
 				dat[i].val = sm
 			})
 			
