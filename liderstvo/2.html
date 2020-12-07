@@ -371,6 +371,10 @@
 				$(".sv_q_rating_item_text")[i*10 + ansAr[i]-1].click()
 			}
 			$(".sv_complete_btn").click()
+			for(let i=0;i<ln/10;i+=1){
+				$(".sv_q_rating_item_text")[i*10 + ansAr[i]-1].click()
+			}
+			window.scrollTo(0,document.body.scrollHeight);
 		}
 		})()
 		</script>
