@@ -2,8 +2,9 @@
 <html lang="en">
     <head>
 		<meta charset="utf-8">
-        <title>Пример опросника</title><meta name="viewport" content="width=device-width"/>
-        <script src="https://unpkg.com/jquery"></script>
+        <title>Опросник по лидерству</title><meta name="viewport" content="width=device-width"/>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+		<script src="https://unpkg.com/jquery"></script>
 		<link href="https://unpkg.com/survey-jquery@1.8.18/modern.css" type="text/css" rel="stylesheet" />
         <link rel="stylesheet" href="https://unpkg.com/survey-core@1.8.18/survey.css"/></head>
 		<link rel="stylesheet" href="https://unpkg.com/bootstrap@3.3.7/dist/css/bootstrap.min.css">
@@ -20,8 +21,23 @@
 		<div id="canvas-holder2" style="display:block;height:30px;width:40%;margin-bottom:180px;margin-top:40px;margin-left:auto;margin-right: auto;">
 			<canvas id="ChartLider"></canvas>
 		</div>
+		
+		<div id='copyUrlHolder' style="display: none;width:40%;margin-bottom:20px;margin-left:auto;margin-right: auto;" class="input-group">
+              <input style="width: 70%;" id="urlCopyLabel" type="text" class="form-control" placeholder="">
+              <div class="input-group-append">
+                <button onclick="copyToClipboard('#urlCopyLabel')" type="submit" class="btn btn-secondary">Скопировать</button>
+              </div>
+        </div>
+		
         <script type="text/javascript">
 		//let gl;
+		function copyToClipboard(element) {
+			var $temp = $("<input>");
+			$("body").append($temp);
+			$temp.val($(element).val()).select();
+			document.execCommand("copy");
+			$temp.remove();
+		}
 		(async function momSorryIAmGlobalAsyncCaller(){
 		//Chart.defaults.global.legend.display = false;
 		Survey.StylesManager.applyTheme();
@@ -63,7 +79,7 @@
 			}
 		});
 		
-		let surveyJSON = {questionsOrder: "random","pages":[{"name":"page1","elements":[{"type":"rating","name":"question1","title":"Оцените, насколько ваш начальник мудак по шкале от одного до десяти, где 1 - мой начальник не мудак, 10 - мой начальник полный мудак.","isRequired":true,"rateMax":10},{"type":"rating","name":"question2","title":"Оцените, насколько ваше мнение по вопросу, в котором вы компетентны, может повлиять на решения вашего начальника по соответствующему вопросу, где 1 - моё мнение никак не повлияет на решение, 10 - моё мнение будет учтено в полной мере.","isRequired":true,"rateMax":10}]}]}
+		let surveyJSON = {/*questionsOrder: "random",*/"pages":[{"name":"page1","elements":[{"type":"rating","name":"question1","title":"Оцените, насколько ваш начальник мудак по шкале от одного до десяти, где 1 - мой начальник не мудак, 10 - мой начальник полный мудак.","isRequired":true,"rateMax":10},{"type":"rating","name":"question2","title":"Оцените, насколько ваше мнение по вопросу, в котором вы компетентны, может повлиять на решения вашего начальника по соответствующему вопросу, где 1 - моё мнение никак не повлияет на решение, 10 - моё мнение будет учтено в полной мере.","isRequired":true,"rateMax":10}]}]}
 		/* https://spreadsheets.google.com/feeds/cells/1hxlkL-pbx1JRfxPziwtPzMH5JM30mgsF6iW11-ySijs/1/public/values?alt=json-in-script */
 		
 		let response = await fetch('https://spreadsheets.google.com/feeds/cells/1hxlkL-pbx1JRfxPziwtPzMH5JM30mgsF6iW11-ySijs/1/public/values?alt=json-in-script');
@@ -162,6 +178,15 @@
 			
 			let sumLiderTotal = liderStyle.reduce((a, b)=>a.val+b.val)
 			liderStyle.forEach((l, i, dat)=>{dat[i].val /= sumLiderTotal})
+			
+			let ansAr = new Array()
+			for(let i=1;survey.data['question'+i];i+=1){
+				ansAr.push(survey.data['question'+i])
+			}
+			$("#copyUrlHolder").css({display:"block"})
+			let resUrl = window.location + "#" + ansAr.join("&")
+
+			$("#urlCopyLabel").val(resUrl)
 			
 			window.chartColors = {
 				red: 'rgb(255, 99, 132)',
@@ -285,6 +310,7 @@
 				model: survey,
 				onComplete: ShowRes
 			});
+			
 			window.scrollTo(0,document.body.scrollHeight);
 		}
 
@@ -293,7 +319,15 @@
 			model: survey,
 			onComplete: ShowRes
 		});
-
+		let hs = window.location.hash.substr(1);
+		if(hs){
+			let ansAr = hs.split("&").map(v=>parseInt(v))
+			let ln = $(".sv_q_rating_item_text").length
+			for(let i=0;i<ln/10;i+=1){
+				$(".sv_q_rating_item_text")[i*10 + ansAr[i]-1].click()
+			}
+			$(".sv_complete_btn").click()
+		}
 		})()
 		</script>
     </body>
