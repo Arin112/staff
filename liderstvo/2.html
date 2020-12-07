@@ -163,6 +163,8 @@
 			let maxChar = 0, minChar = 1e9;
 			characteristics.forEach(v=>{maxChar = maxChar<v.val/v.max?v.val/v.max:maxChar})
 			characteristics.forEach(v=>{minChar = minChar>v.val/v.max?v.val/v.max:minChar})
+			characteristics.forEach((l, i, dat)=>{(dat[i].val = (l.val/l.max)/maxChar - minChar/maxChar*0.5)})
+			//console.log(characteristics)
 			liderStyle.forEach((l, i, dat)=>{
 				let sm = 0;
 				characteristics.forEach(v=>{
@@ -182,7 +184,17 @@
 			//console.log(characteristics)
 			//console.log(liderStyle)
 			let sumLiderTotal = liderStyle.reduce((a, b)=>a.val+b.val)
-			liderStyle.forEach((l, i, dat)=>{dat[i].val /= sumLiderTotal})
+			liderStyle.forEach((l, i, dat)=>{dat[i].val = dat[i].val/sumLiderTotal})
+			
+			//let diff = Math.abs(liderStyle[0].val-liderStyle[1].val)
+			//console.log(characteristics)
+			liderStyle.forEach((l, i, dat)=>{dat[i].val -= 0.4671082})
+			//
+			//sumLiderTotal = liderStyle.reduce((a, b)=>a.val+b.val)
+			//liderStyle.forEach((l, i, dat)=>{dat[i].val = dat[i].val/sumLiderTotal})
+			
+			sumLiderTotal = liderStyle.reduce((a, b)=>a.val+b.val)
+			liderStyle.forEach((l, i, dat)=>{dat[i].val = dat[i].val/sumLiderTotal})
 			
 			let ansAr = new Array()
 			for(let i=1;survey.data['question'+i];i+=1){
@@ -211,7 +223,7 @@
 					datasets: [{
 						borderColor: window.chartColors.yellow,
 						fill: false,
-						data: characteristics.map(v=>((v.val/v.max)/maxChar - minChar/maxChar*0.5) * 100),
+						data: characteristics.map(v=>(v.val * 100)),
 						backgroundColor: [
 							window.chartColors.red,
 							window.chartColors.blue,
