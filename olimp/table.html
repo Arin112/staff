@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+		<meta charset="utf-8">
+        <title>Опросник по лидерству</title><meta name="viewport" content="width=device-width"/>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+		<script src="https://unpkg.com/jquery"></script>
+		<link rel="stylesheet" href="https://nerc.itmo.ru/standings-wt.css">
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+	</head>
+    <body>
+		
+        <script type="text/javascript">
+		//let gl;
+
+		$.fn.pTag = function(name){return this.first().append("<"+name+"></"+name+">").find(":last-child").last();}
+		$.fn.tag = 	function(name){return this.first().append("<"+name+"></"+name+">");}
+		$.fn.apTag =function(name){return this.first().after("<"+name+"></"+name+">").next();}
+		$.fn.atag = function(name){return this.first().after("<"+name+"></"+name+">");}
+		$.fn.out = 	function(){return this.parent();}
+		$.fn.in = 	function(){return this.find(":last-child").last();}
+
+		function copyToClipboard(element) {
+			var $temp = $("<input>");
+			$("body").append($temp);
+			$temp.val($(element).val()).select();
+			document.execCommand("copy");
+			$temp.remove();
+		}
+		(async function momSorryIAmGlobalAsyncCaller(){
+
+		$(document).keypress(function(e) {
+			if(e.which == 17 && e.ctrlKey) {
+			}
+		});
+		
+
+		let response = await fetch('https://nerc.itmo.ru/archive/2020/standings.html');
+		let spreadsheet = await response.text();
+		
+		spreadsheet = spreadsheet.substring(spreadsheet.indexOf('<table class="standings">'), spreadsheet.indexOf("</tfoot></table>")+"</tfoot></table>".length )
+		
+		$("body").pTag("div").html(spreadsheet)
+		
+		//console.log(spreadsheet)
+		//frame.src = ("data:text/html;base64,"+btoa(spreadsheet))
+		// <table class="standings">
+		// </tfoot></table>
+		let myTableArray = [];
+		
+		$(".standings tr").each(function() {
+			let arrayOfThisRow = [];
+			let tableData = $(this).find('td');
+			if (tableData.length > 0) {
+				tableData.each(function() { arrayOfThisRow.push($(this).text()); });
+				myTableArray.push(arrayOfThisRow);
+			}
+		});
+
+		console.log(myTableArray);
+		
+		})()
+		</script>
+    </body>
+</html>
