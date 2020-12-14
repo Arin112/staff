@@ -8,8 +8,9 @@
 </script>
   <script src="jquery-ui.min.js"></script>
   <link rel="stylesheet" href="jquery-ui.min.css"/>
-  <script src="https://embed.twitch.tv/embed/v1.js"></script>
+
 <script>
+//  "https://embed.twitch.tv/embed/v1.js"
 $.fn.pTag = function(name){return this.first().append("<"+name+"></"+name+">").find(":last-child").last();}
 $.fn.tag = 	function(name){return this.first().append("<"+name+"></"+name+">");}
 $.fn.apTag =function(name){return this.first().after("<"+name+"></"+name+">").next();}
