@@ -10,6 +10,8 @@
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
   <link rel="stylesheet" href="jquery-ui.min.css"/>
 
+  <script src="./ckeditor5/build/ckeditor.js"></script>
+<script type="text/javascript" src="./jquery.simulate.js"></script>
 <script>
 //  "https://embed.twitch.tv/embed/v1.js"
 $.fn.pTag = function(name){return this.first().append("<"+name+"></"+name+">").find(":last-child").last();}
@@ -41,6 +43,81 @@ body{
 
 <script>
 
+jQuery.fn.getPath = function () {
+    if (this.length != 1) throw 'Requires one element.';
+    var path, node = this;
+    while (node.length) {
+        var realNode = node[0], name = realNode.localName;
+        if (!name) break;
+        name = name.toLowerCase();
+
+        var parent = node.parent();
+
+        var siblings = parent.children(name);
+        if (siblings.length > 1) { 
+            name += ':eq(' + siblings.index(realNode) + ')';
+        }
+        path = name + (path ? '>' + path : '');
+        node = parent;
+    }
+    return path;
+};
+
+const ClassicEditorConfig =  {
+				toolbar: {
+					items: [
+						'heading',
+						'|',
+						'bold',
+						'italic',
+						'link',
+						'bulletedList',
+						'numberedList',
+						'|',
+						'indent',
+						'outdent',
+						'|',
+						'imageUpload',
+						'blockQuote',
+						'insertTable',
+						'mediaEmbed',
+						'undo',
+						'redo'
+					]
+				},
+				language: 'en',
+				image: {
+					toolbar: [
+						'imageTextAlternative',
+						'imageStyle:full',
+						'imageStyle:side'
+					]
+				},
+				table: {
+					contentToolbar: [
+						'tableColumn',
+						'tableRow',
+						'mergeTableCells'
+					]
+				},
+				licenseKey: '',
+				
+			};
+
+$.widget("ui.resizable", $.ui.resizable, {
+    resizeTo: function(newSize) {
+        var start = new $.Event("mousedown", { pageX: 0, pageY: 0 });
+        this._mouseStart(start);
+        this.axis = 'se';
+        var end = new $.Event("mouseup", {
+            pageX: newSize.width - this.originalSize.width,
+            pageY: newSize.height - this.originalSize.height
+        });
+        this._mouseDrag(end);
+        this._mouseStop(end);
+    }
+});
+
 function copyToClipboard(element) {
 	let $temp = $("<input>");
 	$("body").append($temp);
@@ -49,26 +126,106 @@ function copyToClipboard(element) {
 	$temp.remove();
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function saveFixed(){
+	$(".opendRichEditorButton").click()
 	let clone = $("#main").clone()
+	$(".closedRichEditorButton").click()
 	clone.find('.notFixed').remove()
 	clone.find('script').remove()
 	clone.find('.ui-resizable-handle').remove()
-	return (btoa(clone.html()))
+	//btoa(unescape(encodeURIComponent(markup))
+	//decodeURIComponent(escape(window.atob(b64)))
+	return (btoa(unescape(encodeURIComponent(clone.html()))))
+	
+}
+
+async function test1(){
+	const sleepTime = 300
+	// $($0).getPath()
+
+	$("html>body>div:eq(0)>div>div:eq(1)>button:eq(0)").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(1)>div:eq(4)>div:eq(4)>button").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>button:eq(1)").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(1)>div:eq(0)>button").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(1)>hr")
+		.simulate("drag", {dx: 10, dy:10})
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(1)").resizable("resizeTo", { height: 400, width: 400 });
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(1)>button:eq(0)>span:eq(0)").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(1)>div:eq(4)>div:eq(2)>button").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(2)>div:eq(1)>form>fieldset>input:eq(0)").val("https://www.youtube.com/watch?v=8BctbPxfVQ8")
+	await sleep(sleepTime)
+	$("html>body>div:eq(2)>div:eq(2)>div>button:eq(0)").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>button:eq(1)").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(2)>div:eq(0)>button").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(1)").simulate("drag", {dx: 100})
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(2)>hr").simulate("drag", {dx: 410, dy:10})
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(1)>hr").simulate("drag", {dx: -100})
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(2)").resizable("resizeTo", { height: 400, width: 400 });
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(2)>button:eq(0)").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(2)>div:eq(4)>div:eq(3)>button").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(2)>div:eq(1)>form>fieldset>input:eq(0)").val("https://www.twitch.tv/nyc_timescape")
+	await sleep(sleepTime)
+	$("html>body>div:eq(2)>div:eq(10)>div>button:eq(0)").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>button:eq(0)").click()
+	await sleep(sleepTime)
+	$("html>body>div:eq(0)>div>div:eq(3)>div:eq(2)>button").click()
+	await sleep(sleepTime)
+	//$("html>body>div:eq(2)>div:eq(2)>div>button").click();
+	////copyToClipboard("html>body>div:eq(2)>div:eq(1)>form>fieldset>input:eq(0)")
+	//await sleep(sleepTime)
+	//$("html>body>div:eq(2)>div:eq(0)>button").click()
+	//await sleep(sleepTime)
+	//$("html>body>div:eq(0)>div>div:eq(1)>button").click()
+	//await sleep(sleepTime)
+	//$("html>body>div:eq(0)>div>div:eq(1)>div:eq(4)>div:eq(4)>button").click()
+	//await sleep(sleepTime)
+	//$("html>body>div:eq(0)>div>div:eq(1)>button").click()
+	//await sleep(sleepTime)
+	//$("html>body>div:eq(0)>div>div:eq(1)>div:eq(5)>div:eq(4)>button").click()
+	//await sleep(sleepTime)
+	//$("html>body>div:eq(0)>div>button:eq(0)").click()
 }
 
 function uniqId() {
-  return Math.round(new Date().getTime() + (Math.random() * 100));
+  return "uid"+Math.round(new Date().getTime() + (Math.random() * 100));
 }
 $.fn.newWindow = function(box={}/*where ans size*/, opt = {}){
+	if(typeof opt.haveSettingsButton === 'undefined')opt.haveSettingsButton = true;
+	if(typeof opt.havePlusButton === 'undefined')opt.havePlusButton = true;
+	const resId = uniqId()
 	const res = this.pTag("div").css({"border-width": "5px", "border-style": "solid", "border-color": "#1C6EA4"})
 		.css({"box-sizing":"border-box", margin:0, "border-radius": "7px"})
 		.css({position:"absolute", left:box.X||0, top:box.Y||0, width:box.W||300, height:box.H||100})
-		.css({overflow:"hidden"})
+		.css({overflow:"hidden", "background-color":"white"}).attr({id:resId})
+	res.pTag("div").css({width:"fit-content", height:"auto", display:"inline-block"})
+		.text("id: "+resId).addClass("notDraggable notFixed")
+	res.append("<hr class='notFixed'>")
 	res.optOpen = false;
 	res.opt = opt;
 	res.showYoutubeHere = (videoId)=>{
-		res.pTag("span").html('<iframe width="100%" height="100%" src="https://www.youtube.com/embed/' + videoId +  '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>')
+		res.pTag("span").html('<iframe width="100%" height="100%" src="https://www.youtube.com/embed/' + videoId +  '" frameborder="0" allow="accelerometer" autoplay; mute; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>')
 		res.find(".newWindowButton").remove()
 		if(res.optOpen){
 			res.optOpen = false;
@@ -106,6 +263,8 @@ $.fn.newWindow = function(box={}/*where ans size*/, opt = {}){
 		//})
 	}
 	//<div id="twitch-embed"></div>
+
+	if(res.opt.haveSettingsButton)
 	res.pTag("button").button({icon: "ui-icon-gear", showLabel: false}).css({height:"34px", width:"34px"})
 		.css({position:"absolute",right:"2px", top:"2px"}).addClass("settingsButton notFixed")
 		.click(function(e){
@@ -118,7 +277,7 @@ $.fn.newWindow = function(box={}/*where ans size*/, opt = {}){
 				return
 			}
 			res.optId = res.pTag("div").css({"position":"absolute", right:"45px", "top":"10px", height:"auto",
-				width:"auto", border:"solid 1px"}).addClass('notFixed')
+				width:"auto", border:"solid 1px", "background-color":"white"}).addClass('notFixed')
 			const menuUl = res.optId;
 			menuUl.addOne = function(){
 				return this.pTag("div").css({display:"block", width:"auto", height:"auto", "border-width":"1px",
@@ -170,7 +329,7 @@ $.fn.newWindow = function(box={}/*where ans size*/, opt = {}){
 								}, 500 );
 								return;
 							}
-							console.log(URL)
+							//console.log(URL)
 							dialog.dialog( "close" );
 							res.showYoutubeHere(URL)
 						},
@@ -202,7 +361,7 @@ $.fn.newWindow = function(box={}/*where ans size*/, opt = {}){
 								}, 500 );
 								return;
 							}
-							console.log(URL)
+							//console.log(URL)
 							dialog.dialog( "close" );
 							res.showTwitchHere(URL)
 						},
@@ -252,34 +411,149 @@ $.fn.newWindow = function(box={}/*where ans size*/, opt = {}){
 			
 			$(menuUl.children()[menuUl.children().length-1]).css({"border-bottom-style":"none"})
 		})
-	
+	if(res.opt.havePlusButton)
 	res.pTag("button").addClass("newWindowButton notFixed")
 		.button({icon: "ui-icon-plus", showLabel: false}).css({height:"34px", width:"34px"})
 		.css({position:"absolute",right:"2px", bottom:"2px"}).click(function(e){
-			res.newWindow({}, {draggable:true, resizable:true})
+			
+			if(!res.addOpen){
+				res.addOpen = true
+			}else{
+				res.addOpen = false;
+				res.addId.remove()
+				return
+			}
+			res.addId = res.pTag("div").css({"position":"absolute", right:"45px", "bottom":"10px", height:"auto",
+				width:"auto", border:"solid 1px"}).addClass('notFixed')
+			const menuUl = res.addId;
+			menuUl.addOne = function(){
+				return this.pTag("div").css({display:"block", width:"auto", height:"auto", "border-width":"1px",
+					"border-bottom-style":"solid"})
+			}
+			
+			menuUl.addOne().pTag("button").css({height:"1.5rem", width:"100%", border:"none"})
+				.text("new window").click(function(){
+					res.newWindow({}, {draggable:true, resizable:true})
+					res.addOpen = false;
+					res.addId.remove()
+				})	
+			menuUl.addOne().pTag("button").css({height:"1.5rem", width:"100%", border:"none"})
+				.text("new Text Area").click(function(){
+					res.newTextArea({}, {draggable:true, resizable:true})
+				})
+			
+			//
+			$(menuUl.children()[menuUl.children().length-1]).css({"border-bottom-style":"none"})
 		})
 	
 	if(res.opt.draggable){
 		res.draggable({ grid: [ 10, 10 ],
 			start:function(){
 				//save here?
-			}
+			},
+			containment: 'parent',
+			stack: "div",
+			distance: 0,
+			cancel: 'input,textarea,button,select,option,.ck,.notDraggable'
+			//handle: ".draggableHeader"
 		})	
 	}
 	if(res.opt.resizable){
-		res.resizable()
+		res.resizable({
+			containment: 'parent',
+			//zIndex: false
+		})
 	}
 	return res;
+}
+
+$.fn.newTextArea = function(){
+	let opt = {haveSettingsButton:false, havePlusButton:false, draggable:true, resizable:true}
+	let box = {X:10, Y:10, W:"400", H:"300"}
+	const res = this.newWindow(box, opt)
+	//res.css({overflow:"hidden scroll"})
+	gl = res
+	
+	const bntData = res.find("hr").prev().apTag("div").addClass("notFixed")
+		.css({width:"fit-content", height:"auto", display:"inline-block"}).pTag("button")
+	bntData.addClass("opendRichEditorButton")
+	bntData.stateEditor = 'open'
+	bntData.text("close editor").click(function(){
+		if(bntData.stateEditor == 'open'){
+			//gl = res.editor
+			bntData.text('open editor')
+			//res.dataDiv.html(res.editor.getData())
+			if(res.editor)res.editor.destroy();
+			bntData.stateEditor = 'close'
+			bntData.removeClass("opendRichEditorButton")
+			bntData.addClass("closedRichEditorButton")
+		}else{
+			ClassicEditor.create( document.querySelector( "#" + CSS.escape(innerId) ), ClassicEditorConfig )
+			.then( editor => {
+				bntData.addClass("opendRichEditorButton")
+				bntData.removeClass("closedRichEditorButton")
+				bntData.text("close editor")
+				res.editor = editor
+				bntData.stateEditor = 'open'
+				//res.dataDiv.text("")
+			} )
+			.catch( error => {
+				console.error( 'Oops, something went wrong!' );
+				console.error( 'Please, report the following error on https://github.com/ckeditor/ckeditor5/issues with the build id and the error stack trace:' );
+				console.warn( 'Build id: sqanr2z8m8jl-8o65j7c6blw0' );
+				console.error( error );
+			} );
+		}
+	})
+	
+	res.find("hr").prev().apTag("div").addClass("notFixed")
+		.css({width:"fit-content", height:"auto", display:"inline-block"}).pTag("button").text("close window")
+		.click(function(){
+			res.remove()
+		})
+	
+	const innerId = uniqId(), realId = uniqId()
+	res.pTag("div").attr({id:realId}).css({height:"100%", "overflow-x":"hidden", "overflow-y":"scroll"})
+		.pTag('div').pTag("div").attr({id:innerId})//.pTag('p').text("Hello World!").out().pTag('p').text('Some initial').out().pTag('p').html("<br>")
+	
+	//res.dataDiv = res.pTag("div")
+	bntData.click().click()
+	//ClassicEditor.create( document.querySelector( "#" + CSS.escape(innerId) ), ClassicEditorConfig )
+	//		.then( editor => {
+	//			// console.log(editor)
+	//			
+	//			res.editor = editor
+	//		} )
+	//		.catch( error => {
+	//			console.error( 'Oops, something went wrong!' );
+	//			console.error( 'Please, report the following error on https://github.com/ckeditor/ckeditor5/issues with the build id and the error stack trace:' );
+	//			console.warn( 'Build id: sqanr2z8m8jl-8o65j7c6blw0' );
+	//			console.error( error );
+	//		} );
+	
 }
 
 $("#main").newWindow({W:"100%", H:"100%"}, {draggable:false, main:true})
 	.newWindow({X:40, Y:120, W:"50%", H:"50%"}, {draggable:true, resizable:true})
 
 let hs = window.location.hash.substr(1);
-if(hs){
-	$("#main").html(atob(hs))
-}
-
+(()=>{
+	if(hs){
+		if(hs == 'test1'){
+			test1()
+			return
+		}
+		if(hs == 'test2'){
+			test2()
+			return
+		}
+		if(hs == 'test3'){
+			test3()
+			return
+		}
+		$("#main").html(decodeURIComponent(escape(atob(hs))))
+	}
+})()
 </script>
 </div>
 
