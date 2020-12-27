@@ -39,7 +39,7 @@ body{
 
 </style>
 <body>
-<div id="main">
+<div id="main" style="overflow-y: auto;overflow-x: hidden;">
 
 <script>
 
@@ -207,7 +207,7 @@ async function test1(){
 	//await sleep(sleepTime)
 	//$("html>body>div:eq(0)>div>button:eq(0)").click()
 }
-
+var gl;
 function uniqId() {
   return "uid"+Math.round(new Date().getTime() + (Math.random() * 100));
 }
@@ -277,7 +277,7 @@ $.fn.newWindow = function(box={}/*where ans size*/, opt = {}){
 				return
 			}
 			res.optId = res.pTag("div").css({"position":"absolute", right:"45px", "top":"10px", height:"auto",
-				width:"auto", border:"solid 1px", "background-color":"white"}).addClass('notFixed')
+				width:"auto", border:"solid 1px", "background-color":"white", "z-index":9999}).addClass('notFixed')
 			const menuUl = res.optId;
 			menuUl.addOne = function(){
 				return this.pTag("div").css({display:"block", width:"auto", height:"auto", "border-width":"1px",
@@ -446,6 +446,30 @@ $.fn.newWindow = function(box={}/*where ans size*/, opt = {}){
 			$(menuUl.children()[menuUl.children().length-1]).css({"border-bottom-style":"none"})
 		})
 	
+	if(res.opt.haveSizeExtendButtons){
+		res.pTag("button").addClass("extendButtonDown notFixed")
+			.button({icon: "ui-icon-circle-triangle-s", showLabel: false}).css({height:"34px", width:"34px"})
+			.css({position:"absolute",right:"2px", bottom:"42px"}).click(function(e){
+				//gl = res
+				//console.log(res.style.height)
+				//console.log(parseInt(res.css("height").slice(0, -1)))
+				res.css({"height" : parseInt(res[0].style.height.slice(0, -1))+10 + "%" })
+				//window.scrollTo(0,document.body.scrollHeight);
+				//window.scrollTo(0,document.querySelector("#main").scrollHeight);
+				
+				res[0].scrollIntoView(false)
+				//window.scrollTo(0, document.body.scrollHeight || document.documentElement.scrollHeight);
+				console.log("adgss")
+			})
+		res.pTag("button").addClass("extendButtonUp notFixed")
+			.button({icon: "ui-icon-circle-triangle-n", showLabel: false}).css({height:"34px", width:"34px"})
+			.css({position:"absolute",right:"2px", bottom:"82px"}).click(function(e){
+				res.css({"height" : parseInt(res[0].style.height.slice(0, -1)) - (parseInt(res[0].style.height.slice(0, -1)) > 40? 10 : 0) + "%" })
+				
+			})
+	
+	}
+	
 	if(res.opt.draggable){
 		res.draggable({ grid: [ 10, 10 ],
 			start:function(){
@@ -472,7 +496,7 @@ $.fn.newTextArea = function(){
 	let box = {X:10, Y:10, W:"400", H:"300"}
 	const res = this.newWindow(box, opt)
 	//res.css({overflow:"hidden scroll"})
-	gl = res
+	//gl = res
 	
 	const bntData = res.find("hr").prev().apTag("div").addClass("notFixed")
 		.css({width:"fit-content", height:"auto", display:"inline-block"}).pTag("button")
@@ -513,8 +537,8 @@ $.fn.newTextArea = function(){
 		})
 	
 	const innerId = uniqId(), realId = uniqId()
-	res.pTag("div").attr({id:realId}).css({height:"100%", "overflow-x":"hidden", "overflow-y":"scroll"})
-		.pTag('div').pTag("div").attr({id:innerId})//.pTag('p').text("Hello World!").out().pTag('p').text('Some initial').out().pTag('p').html("<br>")
+	res.pTag("div").attr({id:realId}).css({height:"86%", "overflow-x":"hidden", "overflow-y":"scroll"})
+		.pTag('div').pTag("div").attr({id:innerId}).addClass("ck-content")//.pTag('p').text("Hello World!").out().pTag('p').text('Some initial').out().pTag('p').html("<br>")
 	
 	//res.dataDiv = res.pTag("div")
 	bntData.click().click()
@@ -533,8 +557,8 @@ $.fn.newTextArea = function(){
 	
 }
 
-$("#main").newWindow({W:"100%", H:"100%"}, {draggable:false, main:true})
-	.newWindow({X:40, Y:120, W:"50%", H:"50%"}, {draggable:true, resizable:true})
+$("#main").newWindow({W:"100%", H:"100%"}, {draggable:false, main:true, haveSizeExtendButtons:true})
+	.newWindow({X:40, Y:120, W:"600px", H:"300px"}, {draggable:true, resizable:true})
 
 let hs = window.location.hash.substr(1);
 (()=>{
