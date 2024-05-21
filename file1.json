@@ -1,0 +1,290 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Configuration Service API",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/v1/config/{service_name}/{environment_name}/hash": {
+      "get": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Get Configuration Hash",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Name of the microservice"
+          },
+          {
+            "in": "path",
+            "name": "environment_name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Environment of the microservice"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration hash",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Configuration not found"
+          }
+        }
+      }
+    },
+    "/api/v1/config/{service_name}/{environment_name}/get_config": {
+      "get": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Get Configuration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Name of the microservice"
+          },
+          {
+            "in": "path",
+            "name": "environment_name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Environment of the microservice"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Configuration not found"
+          }
+        }
+      }
+    },
+    "/api/v1/config/{service_name}/{environment_name}/set_config": {
+      "put": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Set Configuration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Name of the microservice"
+          },
+          {
+            "in": "path",
+            "name": "environment_name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Environment of the microservice"
+          }
+        ],
+        "requestBody": {
+          "description": "Configuration JSON",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration updated successfully"
+          },
+          "400": {
+            "description": "Invalid configuration JSON"
+          },
+          "404": {
+            "description": "Configuration not found"
+          }
+        }
+      }
+    },
+    "/api/v1/config/{service_name}/create_env": {
+      "post": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Create new environment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Name of the microservice"
+          }
+        ],
+        "requestBody": {
+          "description": "New environment name and initial configuration JSON",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "env_name": {
+                    "type": "string",
+                    "description": "Name of the new environment"
+                  },
+                  "config": {
+                    "type": "object",
+                    "description": "Initial configuration JSON (optional, can be copied from existing environment)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Environment created successfully"
+          },
+          "400": {
+            "description": "Invalid request or environment already exists"
+          },
+          "404": {
+            "description": "Source environment not found for copying"
+          }
+        }
+      }
+    },
+    "/api/v1/config/{service_name}/{environment_name}/scheme": {
+      "get": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Get Configuration Schema",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "service_name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Name of the microservice"
+          },
+          {
+            "in": "path",
+            "name": "environment_name",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Environment of the microservice"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration schema in YAML format",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Configuration schema not found"
+          }
+        }
+      }
+    },
+    "/api/v1/auth": {
+      "post": {
+        "summary": "Authenticate and get API Key",
+        "requestBody": {
+          "description": "Login credentials",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "login": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful, API Key returned in X-API-Key header"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "APIKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  }
+}
