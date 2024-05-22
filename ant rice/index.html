@@ -42,38 +42,40 @@
                                         if (headers[i] == "id") {
                                             continue;
                                         }
-                                        var hist_total = Plot.rectY(data,
-                                                                    Plot.binX({y: "count"}, {x: headers[i]})
-                                                                );
-
-                                        // line plot if class == 0
-                                        var line_0 = Plot.lineY(   data.filter(d => d.Class == 0),
-                                                                Plot.binX({y: "count"}, {x: headers[i]})
-                                                            );
-                                        // line plot if class == 1
-                                        var line_1 = Plot.lineY(   data.filter(d => d.Class == 1),
-                                                                Plot.binX({y: "count"}, {x: headers[i]})
-                                                            );
+                                        if (headers[i] == "Class") {
+                                            continue;
+                                        }
+                                        // calc interval for hist using Math 
+                                        let num_data = data.map(d => Number(d[headers[i]])).filter(d => !isNaN(d));
+                                        let interval = (Math.max(...num_data) - Math.min(...num_data)) / Math.ceil(Math.sqrt(num_data.length));
+                                        // console.log(headers[i]);
+                                        // console.log(...data.map(d => Number(d[headers[i]])));
+                                        console.log(interval);
+                                        // console.log(bin_count);
 
                                         var plt_svg = Plot.plot({
                                             width: 800,
                                             height: 400,
                                             x: {label: headers[i]},
                                             y: {label: "count"},
+                                            aspectRatio: 1,
                                             marks: [
-                                                hist_total,
-                                                line_0,
-                                                line_1
+                                            Plot.rectY(data,  Plot.binX({y: "count"}, {x: headers[i], fill: "steelblue", interval:interval})),
+                                            Plot.lineY( data.filter(d => d.Class == 1),
+                                                        Plot.binX({y: "count"}, {x: headers[i], stroke: "red", strokeDasharray: "5,5", strokeWidth: 3, interval:interval})
+                                                    ),
+                                            Plot.lineY( data.filter(d => d.Class == 0),
+                                                        Plot.binX({y: "count"}, {x: headers[i], stroke: "green", strokeDasharray: "5,5", strokeWidth: 3, interval:interval})
+                                                    )
                                             ]
                                         });
-
-                                        // document.querySelector("#collapseEDA").appendChild(plt_svg);
                                         
-
+                                        document.querySelector("#collapseEDA").appendChild(plt_svg);
+                                        console.log(plt_svg);
                                     }
                                     
                                 
-                                    document.querySelector("#collapseEDA").appendChild(plt_svg);
+                                    
                                 }
                                 reader.readAsText(file);
 
