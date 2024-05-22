@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDA & Муравьиный алгоритм</title>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <script src="d3.v7.min.js"></script>
+    <script src="bootstrap.min.js"></script>
+    <script src="plot.min.js"></script>
+    <script src="papaparse.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>EDA анализ и построение бинарного дерева решений</h1>
+
+        <div class="accordion" id="analysisAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingData">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseData" aria-expanded="false" aria-controls="collapseData">
+                        Загрузка данных
+                    </button>
+                </h2>
+                <div id="collapseData" class="accordion-collapse collapse" aria-labelledby="headingData" data-bs-parent="#analysisAccordion">
+                    <div class="accordion-body">
+                        <input type="file" id="fileInput" accept=".csv">
+                        <script>
+                            document.getElementById('fileInput').addEventListener('change', function(e) {
+                                let file = e.target.files[0];
+                                let reader = new FileReader();
+                                var data, parse_result, headers;
+                                // id,Area,MajorAxisLength,MinorAxisLength,Eccentricity,ConvexArea,EquivDiameter,Extent,Perimeter,Roundness,AspectRation,Class
+                                reader.onload = function(e) {
+                                    data = e.target.result;
+                                    // console.log(data);
+                                    
+                                    parse_result = Papa.parse(data, {header: true});
+                                    data = parse_result.data;
+                                    headers = parse_result.meta.fields;
+
+                                    for (let i = 0; i < headers.length; i++) {
+                                        if (headers[i] == "id") {
+                                            continue;
+                                        }
+                                        var hist_total = Plot.rectY(data,
+                                                                    Plot.binX({y: "count"}, {x: headers[i]})
+                                                                );
+
+                                        // line plot if class == 0
+                                        var line_0 = Plot.lineY(   data.filter(d => d.Class == 0),
+                                                                Plot.binX({y: "count"}, {x: headers[i]})
+                                                            );
+                                        // line plot if class == 1
+                                        var line_1 = Plot.lineY(   data.filter(d => d.Class == 1),
+                                                                Plot.binX({y: "count"}, {x: headers[i]})
+                                                            );
+
+                                        var plt_svg = Plot.plot({
+                                            width: 800,
+                                            height: 400,
+                                            x: {label: headers[i]},
+                                            y: {label: "count"},
+                                            marks: [
+                                                hist_total,
+                                                line_0,
+                                                line_1
+                                            ]
+                                        });
+
+                                        // document.querySelector("#collapseEDA").appendChild(plt_svg);
+                                        
+
+                                    }
+                                    
+                                
+                                    document.querySelector("#collapseEDA").appendChild(plt_svg);
+                                }
+                                reader.readAsText(file);
+
+
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingEDA">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEDA" aria-expanded="false" aria-controls="collapseEDA">
+                        EDA анализ
+                    </button>
+                </h2>
+                <div id="collapseEDA" class="accordion-collapse collapse" aria-labelledby="headingEDA" data-bs-parent="#analysisAccordion">
+                    <div class="accordion-body">
+                        <!-- Секция для EDA анализа -->
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingAnt">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAnt" aria-expanded="false" aria-controls="collapseAnt">
+                        Муравьиный алгоритм
+                    </button>
+                </h2>
+                <div id="collapseAnt" class="accordion-collapse collapse" aria-labelledby="headingAnt" data-bs-parent="#analysisAccordion">
+                    <div class="accordion-body">
+                        <!-- Секция для визуализации муравьиного алгоритма -->
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTree" aria-expanded="false" aria-controls="collapseTree">
+                        Результирующее дерево решений
+                    </button>
+                </h2>
+                <div id="collapseTree" class="accordion-collapse collapse" aria-labelledby="headingTree" data-bs-parent="#analysisAccordion">
+                    <div class="accordion-body">
+                        <!-- Секция для отображения дерева решений -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
