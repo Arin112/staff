@@ -21,22 +21,196 @@
                         Загрузка данных
                     </button>
                 </h2>
-                <div id="collapseData" class="accordion-collapse collapse" aria-labelledby="headingData" data-bs-parent="#analysisAccordion">
+                <div id="collapseData" class="accordion-collapse collapse show" aria-labelledby="headingData" data-bs-parent="#analysisAccordion">
                     <div class="accordion-body">
                         <input type="file" id="fileInput" accept=".csv">
+
                         <script>
+                            function create_cor_matrix_svg(headers, data) {
+                                headers = headers.filter(h => h != "id" && h != "Class");
+                                // set the dimensions and margins of the graph
+                                const margin = {top: 30, right: 30, bottom: 120, left: 120},
+                                width = 550 - margin.left - margin.right,
+                                height = 550 - margin.top - margin.bottom;
+                                const svg_div = document.createElement("div");
+                                // append the svg object to the body of the page
+                                const svg = d3.select(svg_div)
+                                .append("svg")
+                                .attr("width", width + margin.left + margin.right)
+                                .attr("height", height + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", `translate(${margin.left},${margin.top})`);
+                                
+                                // Labels of row and columns
+                                const myGroups = headers
+                                const myVars = headers
+                                
+                                // Build X scales and axis:
+                                const x = d3.scaleBand()
+                                .range([ 0, width ])
+                                .domain(myGroups)
+                                .padding(0.01);
+                                svg.append("g")
+                                .attr("transform", `translate(0, ${height})`)
+                                .call(d3.axisBottom(x))
+                                // наклоним подписи
+                                .selectAll("text")
+                                .attr("transform", "translate(-10,0)rotate(-45)")
+                                .style("text-anchor", "end");
+                                svg.selectAll("text")
+                                .style("font-size", "14px");
+                                
+                                // Build X scales and axis:
+                                const y = d3.scaleBand()
+                                .range([ height, 0 ])
+                                .domain(myVars)
+                                .padding(0.01);
+                                svg.append("g")
+                                .call(d3.axisLeft(y))
+                                .selectAll("text")
+                                .style("font-size", "14px");
+                                
+                                // console.log(data);
+                                
+                                const tooltip = d3.select(svg_div)
+                                .append("div")
+                                .style("opacity", 0)
+                                .attr("class", "tooltip")
+                                .style("background-color", "white")
+                                .style("border", "solid")
+                                .style("border-width", "2px")
+                                .style("border-radius", "5px")
+                                .style("padding", "5px")
+
+                                const mouseover = function(event,d) {
+                                    tooltip
+                                    .style("opacity", 1)
+                                    d3.select(this)
+                                    .style("stroke", "black")
+                                    .style("opacity", 1)
+                                }
+                                const mousemove = function(event,d) {
+                                    tooltip
+                                    .html("Correlation is: " + d.value)
+                                    .style("left", (event.x)/2 + "px")
+                                    .style("top", (event.y)/2 + "px")
+                                }
+                                const mouseleave = function(event,d) {
+                                    tooltip
+                                    .style("opacity", 0)
+                                    d3.select(this)
+                                    .style("stroke", "none")
+                                    .style("opacity", 0.8)
+                                }
+                                
+                                function get_correlation(data, x, y) {
+                                    let x_data = data.map(d => Number(d[x])).filter((d, i) =>{
+                                            if (isNaN(d)) {
+                                                console.log(`Error: ${x} ${i} ${d}`);
+                                                return false;
+                                            }else{
+                                                return true;
+                                            }
+                                        }
+                                    );
+                                    let y_data = data.map(d => Number(d[y])).filter(d => !isNaN(d));
+                                    let x_mean = d3.mean(x_data);
+                                    let y_mean = d3.mean(y_data);
+                                    let numerator = x_data.map((d, i) => (d - x_mean) * (y_data[i] - y_mean)).reduce((a, b) => a + b, 0);
+                                    let denominator = Math.sqrt(x_data.map(d => (d - x_mean) ** 2).reduce((a, b) => a + b, 0) * y_data.map(d => (d - y_mean) ** 2).reduce((a, b) => a + b, 0));
+                                    return numerator / denominator;
+                                }
+
+                                // Build color scale blue, white, red
+                                const myColor = d3.scaleLinear()
+                                .range(["blue", "white", "red"])
+                                .domain([-1, 0, 1])
+                                
+                                // create a correlation matrix
+                                let corr_matrix = [];
+                                for (let i = 0; i < myGroups.length; i++) {
+                                    let row = [];
+                                    for (let j = 0; j < myVars.length; j++) {
+                                        row.push(get_correlation(data, myGroups[i], myVars[j]));
+                                    }
+                                    corr_matrix.push(row);
+                                }
+                                console.log(corr_matrix);
+                                // set the color scale
+                                svg.selectAll()
+                                .data(corr_matrix)
+                                .enter()
+                                .append("g")
+                                .selectAll()
+                                .data((d, i) => d.map((x, j) => ({i: i, j: j, value: x})))
+                                .enter()
+                                .append("rect")
+                                .attr("x", d => x(myGroups[d.i]))
+                                .attr("y", d => y(myVars[d.j]))
+                                .attr("width", x.bandwidth() )
+                                .attr("height", y.bandwidth() )
+                                // поставим цвет в зависимости от значения корреляции
+                                .style("fill", d => myColor(d.value))
+                                .style("opacity", 0.8)
+                                // добавим всплывающее окно
+                                .on("mouseover", mouseover)
+                                .on("mousemove", mousemove)
+                                .on("mouseleave", mouseleave)
+                                
+
+
+                                return svg_div;
+                            }
+                            </script>
+
+                        <script>
+
+                            var list_of_features = [];
+                            var plots = {};
+
                             document.getElementById('fileInput').addEventListener('change', function(e) {
+                                // очистим всё с прошлого раза
+                                document.querySelector("#collapseEDA").innerHTML = "";
+
                                 let file = e.target.files[0];
                                 let reader = new FileReader();
                                 var data, parse_result, headers;
                                 // id,Area,MajorAxisLength,MinorAxisLength,Eccentricity,ConvexArea,EquivDiameter,Extent,Perimeter,Roundness,AspectRation,Class
                                 reader.onload = function(e) {
                                     data = e.target.result;
-                                    // console.log(data);
-                                    
                                     parse_result = Papa.parse(data, {header: true});
                                     data = parse_result.data;
                                     headers = parse_result.meta.fields;
+                                    data.pop();
+
+                                    // развернуть collapseEDA
+                                    var collapseEDA = new bootstrap.Collapse(document.getElementById('collapseEDA'), {toggle: true});
+                                    collapseEDA.show();
+
+                                    // кнопка для создания корреляционной матрицы
+                                    var btn_corr = document.createElement("button");
+                                    btn_corr.className = "btn btn-primary";
+                                    btn_corr.textContent = "Построить корреляционную матрицу";
+                                    btn_corr.addEventListener("click", function(e) {
+                                        // развернуть collapseEDA_2
+                                        var collapseEDA_2 = new bootstrap.Collapse(document.getElementById('collapseEDA_2'), {toggle: true});
+                                        collapseEDA_2.show();
+
+                                        let corr_svg = create_cor_matrix_svg(list_of_features, data);
+                                        document.querySelector("#div_corrmatrix_svg").innerHTML = "";
+                                        document.querySelector("#div_corrmatrix_svg").appendChild(corr_svg);
+
+                                    });
+
+                                    document.querySelector("#collapseEDA").appendChild(btn_corr);
+
+                                    // console.log(data);
+                                    
+
+                                    let frame = document.createElement("div");
+                                    frame.className = "list-group";
+                                    document.querySelector("#collapseEDA").appendChild(frame);
+
 
                                     for (let i = 0; i < headers.length; i++) {
                                         if (headers[i] == "id") {
@@ -69,13 +243,55 @@
                                                     )
                                             ]
                                         });
+                                        plt_svg.id = "plt_id_" + headers[i];
+                                        plots[headers[i]] = plt_svg;
+                                        let t_div = document.createElement("div");
+                                        t_div.id = "div_plt_id_" + headers[i];
+                                        document.querySelector("#collapseEDA").appendChild(t_div);
+                                        document.querySelector("#div_plt_id_" + headers[i]).appendChild(plt_svg);
                                         
-                                        document.querySelector("#collapseEDA").appendChild(plt_svg);
-                                        console.log(plt_svg);
+                                        // фрейм, в котором будет галочка, оформим при помощи bootstrap
+                                        let frame_label = document.createElement("label");
+                                        frame_label.className = "list-group-item d-flex gap-2";
+
+                                        frame.appendChild(frame_label);
+
+                                        // Добавим галочку, использовать ли данный признак
+                                        let checkbox = document.createElement("input");
+                                        checkbox.type = "checkbox";
+                                        checkbox.className = "form-check-input flex-shrink-0";
+                                        checkbox.id = headers[i];
+                                        checkbox.checked = true;
+                                        list_of_features.push(headers[i]);
+                                        // sort by name
+                                        list_of_features.sort();
+                                        checkbox.addEventListener("change", function(e) {
+                                            if (e.target.checked) {
+                                                // Добавить признак в список
+                                                if (!list_of_features.includes(e.target.id)) {
+                                                    list_of_features.push(e.target.id);
+                                                    list_of_features.sort();
+                                                }
+                                                // Если нет графика, то добавить
+                                                if (!document.querySelector("#plt_id_" + e.target.id)) {
+                                                    document.querySelector("#div_plt_id_" + e.target.id).appendChild(plots[e.target.id]);
+                                                }
+                                            } else {
+                                                // Удалить признак из списка
+                                                list_of_features = list_of_features.filter(f => f != e.target.id);
+                                                list_of_features.sort();
+                                                // Удалить график
+                                                document.querySelector("#plt_id_" + e.target.id).remove();
+                                            }
+                                        });
+
+                                        let span = document.createElement("span");
+                                        span.textContent = headers[i];
+                                        frame_label.appendChild(checkbox);
+                                        frame_label.appendChild(span);
+
+                                        // console.log(plt_svg);
                                     }
-                                    
-                                
-                                    
                                 }
                                 reader.readAsText(file);
 
@@ -88,12 +304,24 @@
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingEDA">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEDA" aria-expanded="false" aria-controls="collapseEDA">
-                        EDA анализ
+                        EDA анализ 1 - Выбор признаков
                     </button>
                 </h2>
                 <div id="collapseEDA" class="accordion-collapse collapse" aria-labelledby="headingEDA" data-bs-parent="#analysisAccordion">
                     <div class="accordion-body">
-                        <!-- Секция для EDA анализа -->
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingEDA_2">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEDA_2" aria-expanded="false" aria-controls="collapseEDA_2">
+                        EDA анализ 2 - Корреляционная матрица
+                    </button>
+                </h2>
+                <div id="collapseEDA_2" class="accordion-collapse collapse" aria-labelledby="headingEDA_2" data-bs-parent="#analysisAccordion">
+                    <div class="accordion-body">
+                        <div id="div_corrmatrix_svg"> </div>
                     </div>
                 </div>
             </div>
