@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +10,9 @@
     <script src="bootstrap.min.js"></script>
     <script src="plot.min.js"></script>
     <script src="papaparse.min.js"></script>
+    <script src="d3-graphviz.min.js"></script>
 </head>
+
 <body>
     <div class="container">
         <h1>EDA анализ и построение бинарного дерева решений</h1>
@@ -17,309 +20,585 @@
         <div class="accordion" id="analysisAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingData">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseData" aria-expanded="false" aria-controls="collapseData">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseData" aria-expanded="false" aria-controls="collapseData">
                         Загрузка данных
                     </button>
                 </h2>
-                <div id="collapseData" class="accordion-collapse collapse show" aria-labelledby="headingData" data-bs-parent="#analysisAccordion">
+                <div id="collapseData" class="accordion-collapse collapse show" aria-labelledby="headingData"
+                    data-bs-parent="#analysisAccordion">
                     <div class="accordion-body">
                         <input type="file" id="fileInput" accept=".csv">
 
                         <script>
-                            function create_cor_matrix_svg(headers, data) {
-                                headers = headers.filter(h => h != "id" && h != "Class");
-                                // set the dimensions and margins of the graph
-                                const margin = {top: 30, right: 30, bottom: 120, left: 120},
-                                width = 550 - margin.left - margin.right,
-                                height = 550 - margin.top - margin.bottom;
-                                const svg_div = document.createElement("div");
-                                // append the svg object to the body of the page
-                                const svg = d3.select(svg_div)
-                                .append("svg")
-                                .attr("width", width + margin.left + margin.right)
-                                .attr("height", height + margin.top + margin.bottom)
-                                .append("g")
-                                .attr("transform", `translate(${margin.left},${margin.top})`);
-                                
-                                // Labels of row and columns
-                                const myGroups = headers
-                                const myVars = headers
-                                
-                                // Build X scales and axis:
-                                const x = d3.scaleBand()
-                                .range([ 0, width ])
-                                .domain(myGroups)
-                                .padding(0.01);
-                                svg.append("g")
-                                .attr("transform", `translate(0, ${height})`)
-                                .call(d3.axisBottom(x))
-                                // наклоним подписи
-                                .selectAll("text")
-                                .attr("transform", "translate(-10,0)rotate(-45)")
-                                .style("text-anchor", "end");
-                                svg.selectAll("text")
-                                .style("font-size", "14px");
-                                
-                                // Build X scales and axis:
-                                const y = d3.scaleBand()
-                                .range([ height, 0 ])
-                                .domain(myVars)
-                                .padding(0.01);
-                                svg.append("g")
-                                .call(d3.axisLeft(y))
-                                .selectAll("text")
-                                .style("font-size", "14px");
-                                
-                                // console.log(data);
-                                
-                                const tooltip = d3.select(svg_div)
-                                .append("div")
-                                .style("opacity", 0)
-                                .attr("class", "tooltip")
-                                .style("background-color", "white")
-                                .style("border", "solid")
-                                .style("border-width", "2px")
-                                .style("border-radius", "5px")
-                                .style("padding", "5px")
+                            const features = [];
+                            const plots = {};
+                            // var first_class, second_class, class_header;
 
-                                const mouseover = function(event,d) {
-                                    tooltip
-                                    .style("opacity", 1)
-                                    d3.select(this)
-                                    .style("stroke", "black")
-                                    .style("opacity", 1)
-                                }
-                                const mousemove = function(event,d) {
-                                    tooltip
-                                    .html("Correlation is: " + d.value)
-                                    .style("left", (event.x)/2 + "px")
-                                    .style("top", (event.y)/2 + "px")
-                                }
-                                const mouseleave = function(event,d) {
-                                    tooltip
-                                    .style("opacity", 0)
-                                    d3.select(this)
-                                    .style("stroke", "none")
-                                    .style("opacity", 0.8)
-                                }
-                                
-                                function get_correlation(data, x, y) {
-                                    let x_data = data.map(d => Number(d[x])).filter((d, i) =>{
-                                            if (isNaN(d)) {
-                                                console.log(`Error: ${x} ${i} ${d}`);
-                                                return false;
-                                            }else{
-                                                return true;
-                                            }
-                                        }
-                                    );
-                                    let y_data = data.map(d => Number(d[y])).filter(d => !isNaN(d));
-                                    let x_mean = d3.mean(x_data);
-                                    let y_mean = d3.mean(y_data);
-                                    let numerator = x_data.map((d, i) => (d - x_mean) * (y_data[i] - y_mean)).reduce((a, b) => a + b, 0);
-                                    let denominator = Math.sqrt(x_data.map(d => (d - x_mean) ** 2).reduce((a, b) => a + b, 0) * y_data.map(d => (d - y_mean) ** 2).reduce((a, b) => a + b, 0));
-                                    return numerator / denominator;
-                                }
+                            // Обработчик события загрузки файла
+                            document.getElementById('fileInput').addEventListener('change', function (e) {
+                                const file = e.target.files[0];
+                                const reader = new FileReader();
 
-                                // Build color scale blue, white, red
-                                const myColor = d3.scaleLinear()
-                                .range(["blue", "white", "red"])
-                                .domain([-1, 0, 1])
-                                
-                                // create a correlation matrix
-                                let corr_matrix = [];
-                                for (let i = 0; i < myGroups.length; i++) {
-                                    let row = [];
-                                    for (let j = 0; j < myVars.length; j++) {
-                                        row.push(get_correlation(data, myGroups[i], myVars[j]));
-                                    }
-                                    corr_matrix.push(row);
-                                }
-                                console.log(corr_matrix);
-                                // set the color scale
-                                svg.selectAll()
-                                .data(corr_matrix)
-                                .enter()
-                                .append("g")
-                                .selectAll()
-                                .data((d, i) => d.map((x, j) => ({i: i, j: j, value: x})))
-                                .enter()
-                                .append("rect")
-                                .attr("x", d => x(myGroups[d.i]))
-                                .attr("y", d => y(myVars[d.j]))
-                                .attr("width", x.bandwidth() )
-                                .attr("height", y.bandwidth() )
-                                // поставим цвет в зависимости от значения корреляции
-                                .style("fill", d => myColor(d.value))
-                                .style("opacity", 0.8)
-                                // добавим всплывающее окно
-                                .on("mouseover", mouseover)
-                                .on("mousemove", mousemove)
-                                .on("mouseleave", mouseleave)
-                                
-
-
-                                return svg_div;
-                            }
-                            </script>
-
-                        <script>
-
-                            var list_of_features = [];
-                            var plots = {};
-
-                            document.getElementById('fileInput').addEventListener('change', function(e) {
-                                // очистим всё с прошлого раза
-                                document.querySelector("#collapseEDA").innerHTML = "";
-
-                                let file = e.target.files[0];
-                                let reader = new FileReader();
-                                var data, parse_result, headers;
-                                // id,Area,MajorAxisLength,MinorAxisLength,Eccentricity,ConvexArea,EquivDiameter,Extent,Perimeter,Roundness,AspectRation,Class
-                                reader.onload = function(e) {
-                                    data = e.target.result;
-                                    parse_result = Papa.parse(data, {header: true});
-                                    data = parse_result.data;
-                                    headers = parse_result.meta.fields;
-                                    data.pop();
-
-                                    // развернуть collapseEDA
-                                    var collapseEDA = new bootstrap.Collapse(document.getElementById('collapseEDA'), {toggle: true});
-                                    collapseEDA.show();
-
-                                    // кнопка для создания корреляционной матрицы
-                                    var btn_corr = document.createElement("button");
-                                    btn_corr.className = "btn btn-primary";
-                                    btn_corr.textContent = "Построить корреляционную матрицу";
-                                    btn_corr.addEventListener("click", function(e) {
-                                        // развернуть collapseEDA_2
-                                        var collapseEDA_2 = new bootstrap.Collapse(document.getElementById('collapseEDA_2'), {toggle: true});
-                                        collapseEDA_2.show();
-
-                                        let corr_svg = create_cor_matrix_svg(list_of_features, data);
-                                        document.querySelector("#div_corrmatrix_svg").innerHTML = "";
-                                        document.querySelector("#div_corrmatrix_svg").appendChild(corr_svg);
-
-                                    });
-
-                                    document.querySelector("#collapseEDA").appendChild(btn_corr);
-
-                                    // console.log(data);
+                                reader.onload = function (e) {
+                                    let data = Papa.parse(e.target.result, { header: true }).data;
+                                    // убрать последнюю строку, т.к. она поломана
+                                    data = data.slice(0, data.length - 1);
                                     
+                                    const headers = Object.keys(data[0]);
 
-                                    let frame = document.createElement("div");
-                                    frame.className = "list-group";
-                                    document.querySelector("#collapseEDA").appendChild(frame);
+                                    // Очистка предыдущих результатов
+                                    document.querySelector("#collapseEDA .accordion-body").innerHTML = "";
+                                    document.querySelector("#div_corrmatrix_svg").innerHTML = "";
 
+                                    // Развертывание аккордеона EDA
+                                    new bootstrap.Collapse(document.getElementById('collapseEDA'), { toggle: true });
 
-                                    for (let i = 0; i < headers.length; i++) {
-                                        if (headers[i] == "id") {
-                                            continue;
+                                    // Создание кнопки для построения корреляционной матрицы
+                                    const correlationMatrixButton = document.createElement("button");
+                                    correlationMatrixButton.className = "btn btn-primary me-2";
+                                    correlationMatrixButton.textContent = "Построить корреляционную матрицу";
+                                    correlationMatrixButton.addEventListener("click", function () {
+                                        // Проверка количества выбранных признаков
+                                        if (features.length < 2) {
+                                            alert("Выберите хотя бы два признака для построения корреляционной матрицы.");
+                                            return;
                                         }
-                                        if (headers[i] == "Class") {
-                                            continue;
-                                        }
-                                        // calc interval for hist using Math 
-                                        let num_data = data.map(d => Number(d[headers[i]])).filter(d => !isNaN(d));
-                                        let interval = (Math.max(...num_data) - Math.min(...num_data)) / Math.ceil(Math.sqrt(num_data.length));
-                                        // console.log(headers[i]);
-                                        // console.log(...data.map(d => Number(d[headers[i]])));
-                                        console.log(interval);
-                                        // console.log(bin_count);
-
-                                        var plt_svg = Plot.plot({
-                                            width: 800,
-                                            height: 400,
-                                            x: {label: headers[i]},
-                                            y: {label: "count"},
-                                            aspectRatio: 1,
-                                            marks: [
-                                            Plot.rectY(data,  Plot.binX({y: "count"}, {x: headers[i], fill: "steelblue", interval:interval})),
-                                            Plot.lineY( data.filter(d => d.Class == 1),
-                                                        Plot.binX({y: "count"}, {x: headers[i], stroke: "red", strokeDasharray: "5,5", strokeWidth: 3, interval:interval})
-                                                    ),
-                                            Plot.lineY( data.filter(d => d.Class == 0),
-                                                        Plot.binX({y: "count"}, {x: headers[i], stroke: "green", strokeDasharray: "5,5", strokeWidth: 3, interval:interval})
-                                                    )
-                                            ]
+                                        // Создание кнопки для перехода на следующий этап
+                                        const nextButton = document.createElement("button");
+                                        nextButton.className = "btn btn-primary me-2";
+                                        nextButton.textContent = "Начать муравьиный алгоритм";
+                                        nextButton.addEventListener("click", function () {
+                                            ant_algorithm(data, features, "Class");
                                         });
-                                        plt_svg.id = "plt_id_" + headers[i];
-                                        plots[headers[i]] = plt_svg;
-                                        let t_div = document.createElement("div");
-                                        t_div.id = "div_plt_id_" + headers[i];
-                                        document.querySelector("#collapseEDA").appendChild(t_div);
-                                        document.querySelector("#div_plt_id_" + headers[i]).appendChild(plt_svg);
-                                        
-                                        // фрейм, в котором будет галочка, оформим при помощи bootstrap
-                                        let frame_label = document.createElement("label");
-                                        frame_label.className = "list-group-item d-flex gap-2";
+                                        document.querySelector("#collapseEDA_2 .accordion-body").appendChild(nextButton);
 
-                                        frame.appendChild(frame_label);
+                                        // Развертывание аккордеона с корреляционной матрицей
+                                        new bootstrap.Collapse(document.getElementById('collapseEDA_2'), { toggle: true });
+                                        // Создание и отображение корреляционной матрицы
+                                        const correlationMatrixSvg = createCorrelationMatrixSvg(features, data);
+                                        document.querySelector("#div_corrmatrix_svg").innerHTML = "";
+                                        document.querySelector("#div_corrmatrix_svg").appendChild(correlationMatrixSvg);
+                                    });
+                                    document.querySelector("#collapseEDA .accordion-body").appendChild(correlationMatrixButton);
 
-                                        // Добавим галочку, использовать ли данный признак
-                                        let checkbox = document.createElement("input");
+                                    // Создание списка признаков
+                                    const featureList = document.createElement("div");
+                                    featureList.className = "list-group";
+                                    document.querySelector("#collapseEDA .accordion-body").appendChild(featureList);
+
+                                    // Добавление признаков в список
+                                    headers.forEach(header => {
+                                        if (header === "id" || header === "Class") {
+                                            return;
+                                        }
+
+                                        features.push(header);
+                                        features.sort();
+
+                                        // Создание элемента списка признака
+                                        const featureItem = document.createElement("label");
+                                        featureItem.className = "list-group-item d-flex gap-2";
+
+                                        // Создание чекбокса для признака
+                                        const checkbox = document.createElement("input");
                                         checkbox.type = "checkbox";
                                         checkbox.className = "form-check-input flex-shrink-0";
-                                        checkbox.id = headers[i];
+                                        checkbox.id = header;
                                         checkbox.checked = true;
-                                        list_of_features.push(headers[i]);
-                                        // sort by name
-                                        list_of_features.sort();
-                                        checkbox.addEventListener("change", function(e) {
-                                            if (e.target.checked) {
-                                                // Добавить признак в список
-                                                if (!list_of_features.includes(e.target.id)) {
-                                                    list_of_features.push(e.target.id);
-                                                    list_of_features.sort();
-                                                }
-                                                // Если нет графика, то добавить
-                                                if (!document.querySelector("#plt_id_" + e.target.id)) {
-                                                    document.querySelector("#div_plt_id_" + e.target.id).appendChild(plots[e.target.id]);
-                                                }
-                                            } else {
-                                                // Удалить признак из списка
-                                                list_of_features = list_of_features.filter(f => f != e.target.id);
-                                                list_of_features.sort();
-                                                // Удалить график
-                                                document.querySelector("#plt_id_" + e.target.id).remove();
-                                            }
+                                        checkbox.addEventListener("change", function (e) {
+                                            handleFeatureCheckboxChange(e.target, data, header);
                                         });
 
-                                        let span = document.createElement("span");
-                                        span.textContent = headers[i];
-                                        frame_label.appendChild(checkbox);
-                                        frame_label.appendChild(span);
+                                        // Создание метки для чекбокса
+                                        const label = document.createElement("span");
+                                        label.textContent = header;
 
-                                        // console.log(plt_svg);
+                                        // Добавление элементов в DOM
+                                        featureItem.appendChild(checkbox);
+                                        featureItem.appendChild(label);
+                                        featureList.appendChild(featureItem);
+
+                                        // Создание и отображение гистограммы для признака
+                                        const plotSvg = createHistogram(data, header);
+                                        plots[header] = plotSvg;
+                                        const plotDiv = document.createElement("div");
+                                        plotDiv.id = `div_plt_id_${header}`;
+                                        plotDiv.appendChild(plotSvg);
+                                        document.querySelector("#collapseEDA .accordion-body").appendChild(plotDiv);
+                                    });
+                                };
+
+                                reader.readAsText(file);
+                            });
+
+                            /**
+                             * Функция для запуска муравьиного алгоритма.
+                             * 
+                             * @param {Array<object>} data - Массив объектов данных.
+                             * @param {Array<string>} features - Массив выбранных признаков.
+                             * @param {string} target_class - Название целевого класса.
+                             */
+                            function ant_algorithm(data, features, target_class){
+                                // Очистка предыдущих результатов
+                                document.querySelector("#collapseAnt .accordion-body").innerHTML = "";
+
+                                // Развертывание аккордеона с муравьиным алгоритмом
+                                new bootstrap.Collapse(document.getElementById('collapseAnt'), { toggle: true });
+
+                                // Начнём муравьиный алгоритм
+                                var ants = []
+
+                                dataMins = {}, dataMaxs = {}
+                                features.forEach((feature) => {
+                                    dataMins[feature] = Math.min(...data.map((d) => Number(d[feature])))
+                                    dataMaxs[feature] = Math.max(...data.map((d) => Number(d[feature])))
+                                })
+
+                                const make_ch = (feature, operation) => {
+                                    return {class: feature, operation: operation}
+                                }
+
+                                function operation (value, class_header, threshold, lg){
+                                    // console.log(value, class_header, threshold, lg, dataMaxs[class_header], dataMins[class_header])
+                                    return lg ? value < (dataMaxs[class_header] - dataMins[class_header])*threshold + dataMins[class_header] : value > (dataMaxs[class_header] - dataMins[class_header])*threshold + dataMins[class_header]
+                                }
+
+                                const make_operation = (threshold, lg) => {
+                                    function f(value, class_header){
+                                        return operation(value, class_header, f.threshold, f.lg)
+                                    }
+                                    f.threshold = threshold
+                                    f.lg = lg
+                                    return f
+                                }
+
+                                const mutate_operation = (operation) => {
+                                    let new_threshold = operation.threshold + (Math.random()*0.1 - 0.05)
+                                    if (new_threshold < 0){
+                                        new_threshold = Math.random()
+                                    }else if (new_threshold > 1){
+                                        new_threshold = Math.random()
+                                    }
+                                    return make_operation(new_threshold, Math.random() > 0.9? !operation.lg : operation.lg)
+                                }
+
+                                const mutate_ch = (ch) => {
+                                    if (Math.random() > 0.95){
+                                        return make_ch(features[Math.floor(Math.random()*features.length)], ch.operation)
+                                    } else {
+                                        return make_ch(ch.class, mutate_operation(ch.operation))
                                     }
                                 }
-                                reader.readAsText(file);
 
+                                const create_genome  = () => {
+                                    return {
+                                        left:null, // left child, выбирается если operation(data[feature]) == false
+                                        right:null, // right child, выбирается если operation(data[feature]) == true
+                                        ch: make_ch(features[Math.floor(Math.random()*features.length)], make_operation(Math.random(), Math.random() > 0.5))
+                                    }
+                                }
 
-                            });
+                                const mutate_genome = (genome) => {
+                                    const r = Math.random()
+
+                                    if(r < 0.9){
+                                        return {
+                                            left: genome.left ? mutate_genome(genome.left) : genome.left,
+                                            right: genome.right ? mutate_genome(genome.right) : genome.right,
+                                            ch: Math.random() > 0.2 ? mutate_ch(genome.ch) : genome.ch
+                                        }
+                                    }
+                                    else if (r < 0.95){
+                                        return {
+                                            left: Math.random() > 0.5 ? (genome.left ? null : create_genome()) : genome.left,
+                                            right: Math.random() > 0.5 ? (genome.right ? null : create_genome()) : genome.right,
+                                            ch: Math.random() > 0.2 ? mutate_ch(genome.ch) : genome.ch
+                                        }
+                                    }
+                                    else {
+                                        return genome
+                                    }
+                                }
+
+                                const make_ant = (genome) => {
+                                    return {
+                                        genome: genome,
+                                        fitness: 0
+                                    }
+                                }
+
+                                const mutate_ant = (ant) => {
+                                    return make_ant(mutate_genome(ant.genome))
+                                }
+
+                                const score_ant = (ant) => {
+                                    // пройдём map'ом по всем данным
+                                    let iters = 0;
+                                    const score = data.map((d) => {
+                                        let genome = ant.genome
+                                        let cur_ans = false
+                                        while (genome){
+                                            iters++
+                                            res = genome.ch.operation(d[genome.ch.class], genome.ch.class)
+                                            if (res){
+                                                cur_ans = true
+                                                genome = genome.right
+                                            } else {
+                                                cur_ans = false
+                                                genome = genome.left
+                                            }
+                                        }
+                                        return cur_ans ? d[target_class] == 1 : d[target_class] == 0
+                                    }).reduce((a,b) => a + b, 0)
+                                    return score - iters/data.length
+                                }
+
+                                const create_ant = () => {
+                                    return make_ant(create_genome())
+                                }
+
+                                const create_ants = (n) => {
+                                    return Array(n).fill(0).map(() => create_ant())
+                                }
+
+                                const mutate_ants = (ants) => {
+                                    return ants.map((ant) => mutate_ant(ant))
+                                }
+
+                                const score_ants = (ants) => {
+                                    return ants.map((ant) => {
+                                        ant.fitness = score_ant(ant)
+                                        return ant
+                                    })
+                                }
+                                
+                                // выбор n лучших муравьёв, чем больше score, тем лучше
+                                const select_ants = (ants, n) => {
+                                    return ants.sort((a,b) => b.fitness - a.fitness).slice(0,n)
+                                }
+                                const sleep = ms => new Promise(r => setTimeout(r, ms));
+                                // Для теста запустим асинхронно популяцию из 1000 муравьёв и выведем их результаты, запустим по кнопке
+                                document.querySelector("#collapseAnt .accordion-body").innerHTML = "";
+                                const antButton = document.createElement("button");
+                                antButton.className = "btn btn-primary me-2";
+                                antButton.textContent = "Запустить муравьиный алгоритм";
+                                var stop_flag = false
+                                // создадим label для вывода результата
+
+                                antButton.addEventListener("click", async function () {
+                                    ants = create_ants(100)
+                                    let iter = 0;
+                                    while (!stop_flag){
+                                        
+                                        ants = select_ants(score_ants(ants), 10)
+                                        document.querySelector("#result_label").textContent = `Поколение ${iter++}: ${ants[0].fitness}`
+                                        for (let j = 0; j < 90; j++){
+                                            ants.push(mutate_ant(ants[j % 10]))
+                                        }
+                                        
+                                        await sleep(1)
+                                    }
+                                });
+                                // Кнопка остановки алгоритма
+                                const antButton_stop = document.createElement("button");
+                                antButton_stop.className = "btn btn-primary me-2";
+                                antButton_stop.textContent = "Остановить муравьиный алгоритм";
+                                antButton_stop.addEventListener("click", async function () {
+                                    stop_flag = true
+                                    console.log("Остановлено")
+                                    await sleep(100)
+                                    console.log(ants)
+                                    const svg = svg_from_genome(ants[0].genome)
+                                    const svgDiv = document.createElement("div");
+                                    document.querySelector("#collapseAnt .accordion-body").appendChild(svgDiv);
+                                    svgDiv.appendChild(svg);
+
+                                });
+                                document.querySelector("#collapseAnt .accordion-body").appendChild(antButton);
+                                document.querySelector("#collapseAnt .accordion-body").appendChild(antButton_stop);
+
+                                if (!document.querySelector("#result_label")){
+                                    const result_label = document.createElement("label");
+                                    result_label.id = "result_label"
+                                    document.querySelector("#collapseAnt .accordion-body").appendChild(result_label);
+                                }else{
+                                    document.querySelector("#result_label").textContent = ""
+                                }
+
+                            }
+
+                            function svg_from_genome(genome){
+                                console.log(genome)
+                                function genome_to_dot(genome, parent_id = null, is_right = false){
+                                    console.log(genome)
+                                    const id = "id_"+Math.random().toString(36).substring(2, 15)
+                                    const tr = (dataMaxs[genome.ch.class] - dataMins[genome.ch.class])*genome.ch.operation.threshold + dataMins[genome.ch.class]
+                                    let dot = ""
+                                    if (parent_id){
+                                        dot += `${id} [label="${genome.ch.class} ${genome.ch.operation.lg ? '<' : '>'} ${tr.toFixed(2)}\\n"];\n`
+                                        dot += `${parent_id} -> ${id} [label="${is_right ? 'Да' : 'Нет'}"];\n`
+                                    }else{
+                                        dot += `${id} [label="${genome.ch.class} ${genome.ch.operation.lg ? '<' : '>'} ${tr.toFixed(2)}\\n"];\n`
+                                    }
+                                    if (genome.left){
+                                        dot += genome_to_dot(genome.left, id, false)
+                                    } else {
+                                        dot += `${id}_left [label="${0}"];\n`
+                                        dot += `${id} -> ${id}_left [label="Нет"];\n`
+                                    }
+                                    if (genome.right){
+                                        dot += genome_to_dot(genome.right, id, true)
+                                    } else {
+                                        dot += `${id}_right [label="${1}"];\n`
+                                        dot += `${id} -> ${id}_right [label="Да"];\n`
+                                    }
+                                    return dot
+                                }
+                                const dot = `digraph {
+                                    node [shape=box];
+                                    ${genome_to_dot(genome)}
+                                }`
+                                console.log(dot)
+                                const svg = document.createElement("div");
+                                d3.select(svg)
+                                    .graphviz()
+                                    .dot(dot)
+                                    .render();
+                                return svg
+                            }
+
+                            /**
+                             * Обработчик события изменения состояния чекбокса признака.
+                             *
+                             * @param {HTMLInputElement} checkbox - Чекбокс признака.
+                             * @param {Array<object>} data - Массив объектов данных.
+                             * @param {string} header - Заголовок столбца данных.
+                             */
+                            function handleFeatureCheckboxChange(checkbox, data, header) {
+                                if (checkbox.checked) {
+                                    // Добавление признака в список выбранных
+                                    if (!features.includes(header)) {
+                                        features.push(header);
+                                        features.sort();
+                                    }
+
+                                    // Отображение гистограммы
+                                    document.querySelector(`#div_plt_id_${header}`).innerHTML = "";
+                                    document.querySelector(`#div_plt_id_${header}`).appendChild(plots[header]);
+                                } else {
+                                    // Удаление признака из списка выбранных
+                                    features.splice(features.indexOf(header), 1);
+
+                                    // Скрытие гистограммы
+                                    document.querySelector(`#div_plt_id_${header}`).innerHTML = "";
+                                }
+                            }
+
+                            /**
+                             * Создает SVG-элемент для гистограммы.
+                             *
+                             * @param {Array<object>} data - Массив объектов данных.
+                             * @param {string} header - Заголовок столбца данных.
+                             * @returns {HTMLElement} - Созданный SVG-элемент.
+                             */
+                            function createHistogram(data, header) {
+                                const numData = data.map(d => Number(d[header])).filter(d => !isNaN(d));
+                                const interval = (Math.max(...numData) - Math.min(...numData)) / Math.ceil(Math.sqrt(numData.length));
+
+                                return Plot.plot({
+                                    width: 800,
+                                    height: 400,
+                                    x: { label: header },
+                                    y: { label: "Count" },
+                                    aspectRatio: 1,
+                                    marks: [
+                                        Plot.rectY(data, Plot.binX({ y: "count" }, { x: header, fill: "steelblue", interval })),
+                                        Plot.lineY(
+                                            data.filter(d => d.Class === "1"),
+                                            Plot.binX({ y: "count" }, { x: header, stroke: "red", strokeDasharray: "5,5", strokeWidth: 3, interval })
+                                        ),
+                                        Plot.lineY(
+                                            data.filter(d => d.Class === "0"),
+                                            Plot.binX({ y: "count" }, { x: header, stroke: "green", strokeDasharray: "5,5", strokeWidth: 3, interval })
+                                        )
+                                    ]
+                                });
+                            }
+
+                                                        /**
+                             * Создает SVG-элемент для корреляционной матрицы.
+                             *
+                             * @param {Array<string>} headers - Массив заголовков столбцов данных.
+                             * @param {Array<object>} data - Массив объектов данных.
+                             * @returns {HTMLElement} - Созданный SVG-элемент.
+                             */
+                             function createCorrelationMatrixSvg(headers, data) {
+                                const filteredHeaders = headers.filter(h => h !== "id" && h !== "Class");
+
+                                // Размеры и отступы графика
+                                const margin = { top: 30, right: 30, bottom: 120, left: 120 };
+                                const width = 550 - margin.left - margin.right;
+                                const height = 550 - margin.top - margin.bottom;
+
+                                // Создание контейнера для SVG
+                                const svgDiv = document.createElement("div");
+
+                                // Создание SVG-элемента
+                                const svg = d3.select(svgDiv)
+                                    .append("svg")
+                                    .attr("width", width + margin.left + margin.right)
+                                    .attr("height", height + margin.top + margin.bottom)
+                                    .append("g")
+                                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                                // Масштабирование осей
+                                const xScale = d3.scaleBand()
+                                    .range([0, width])
+                                    .domain(filteredHeaders)
+                                    .padding(0.01);
+
+                                const yScale = d3.scaleBand()
+                                    .range([height, 0])
+                                    .domain(filteredHeaders)
+                                    .padding(0.01);
+
+                                // Создание осей
+                                svg.append("g")
+                                    .attr("transform", `translate(0, ${height})`)
+                                    .call(d3.axisBottom(xScale))
+                                    .selectAll("text")
+                                    .attr("transform", "translate(-10,0)rotate(-45)")
+                                    .style("text-anchor", "end")
+                                    .style("font-size", "14px");
+
+                                svg.append("g")
+                                    .call(d3.axisLeft(yScale))
+                                    .selectAll("text")
+                                    .style("font-size", "14px");
+
+                                // Создание всплывающей подсказки
+                                const tooltip = d3.select(svgDiv)
+                                    .append("div")
+                                    .attr("class", "tooltip");
+
+                                // Обработчики событий мыши
+                                const mouseover = function () {
+                                    tooltip.style("opacity", 1);
+                                    d3.select(this)
+                                        .style("stroke", "black")
+                                        .style("opacity", 1);
+                                };
+
+                                const mousemove = function (event, d) {
+                                    tooltip
+                                        .html("Correlation: " + d.value)
+                                        .style("left", event.pageX + "px")
+                                        .style("top", event.pageY + "px");
+                                };
+
+                                const mouseleave = function () {
+                                    tooltip.style("opacity", 0);
+                                    d3.select(this)
+                                        .style("stroke", "none")
+                                        .style("opacity", 0.8);
+                                };
+
+                                // Вычисление корреляционной матрицы
+                                const correlationMatrix = calculateCorrelationMatrix(data, filteredHeaders);
+
+                                // Цветовая шкала
+                                const colorScale = d3.scaleLinear()
+                                    .range(["blue", "white", "red"])
+                                    .domain([-1, 0, 1]);
+
+                                // Отрисовка ячеек матрицы
+                                svg.selectAll()
+                                    .data(correlationMatrix)
+                                    .enter()
+                                    .append("g")
+                                    .selectAll()
+                                    .data((d, i) => d.map((value, j) => ({ i, j, value })))
+                                    .enter()
+                                    .append("rect")
+                                    .attr("x", d => xScale(filteredHeaders[d.i]))
+                                    .attr("y", d => yScale(filteredHeaders[d.j]))
+                                    .attr("width", xScale.bandwidth())
+                                    .attr("height", yScale.bandwidth())
+                                    .style("fill", d => colorScale(d.value))
+                                    .style("opacity", 0.8)
+                                    .on("mouseover", mouseover)
+                                    .on("mousemove", mousemove)
+                                    .on("mouseleave", mouseleave);
+
+                                return svgDiv;
+                            }
+
+                            /**
+                             * Вычисляет корреляционную матрицу для заданных данных и заголовков столбцов.
+                             *
+                             * @param {Array<object>} data - Массив объектов данных.
+                             * @param {Array<string>} headers - Массив заголовков столбцов данных.
+                             * @returns {Array<Array<number>>} - Корреляционная матрица.
+                             */
+                            function calculateCorrelationMatrix(data, headers) {
+                                const matrix = [];
+                                for (let i = 0; i < headers.length; i++) {
+                                    matrix[i] = [];
+                                    for (let j = 0; j < headers.length; j++) {
+                                        matrix[i][j] = getCorrelation(data, headers[i], headers[j]);
+                                    }
+                                }
+                                return matrix;
+                            }
+
+                            /**
+                             * Вычисляет коэффициент корреляции Пирсона между двумя столбцами данных.
+                             *
+                             * @param {Array<object>} data - Массив объектов данных.
+                             * @param {string} header1 - Заголовок первого столбца.
+                             * @param {string} header2 - Заголовок второго столбца.
+                             * @returns {number} - Коэффициент корреляции.
+                             */
+                            function getCorrelation(data, header1, header2) {
+                                const xData = data.map(d => Number(d[header1])).filter(d => !isNaN(d));
+                                const yData = data.map(d => Number(d[header2])).filter(d => !isNaN(d));
+                                const xMean = d3.mean(xData);
+                                const yMean = d3.mean(yData);
+                                const numerator = xData.map((d, i) => (d - xMean) * (yData[i] - yMean)).reduce((a, b) => a + b, 0);
+                                const denominator = Math.sqrt(
+                                    xData.map(d => (d - xMean) ** 2).reduce((a, b) => a + b, 0) *
+                                    yData.map(d => (d - yMean) ** 2).reduce((a, b) => a + b, 0)
+                                );
+                                return numerator / denominator;
+                            }
                         </script>
                     </div>
                 </div>
             </div>
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingEDA">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEDA" aria-expanded="false" aria-controls="collapseEDA">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseEDA" aria-expanded="false" aria-controls="collapseEDA">
                         EDA анализ 1 - Выбор признаков
                     </button>
                 </h2>
-                <div id="collapseEDA" class="accordion-collapse collapse" aria-labelledby="headingEDA" data-bs-parent="#analysisAccordion">
+                <div id="collapseEDA" class="accordion-collapse collapse" aria-labelledby="headingEDA"
+                    data-bs-parent="#analysisAccordion">
                     <div class="accordion-body">
-                        
+
                     </div>
                 </div>
             </div>
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingEDA_2">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEDA_2" aria-expanded="false" aria-controls="collapseEDA_2">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseEDA_2" aria-expanded="false" aria-controls="collapseEDA_2">
                         EDA анализ 2 - Корреляционная матрица
                     </button>
                 </h2>
-                <div id="collapseEDA_2" class="accordion-collapse collapse" aria-labelledby="headingEDA_2" data-bs-parent="#analysisAccordion">
+                <div id="collapseEDA_2" class="accordion-collapse collapse" aria-labelledby="headingEDA_2"
+                    data-bs-parent="#analysisAccordion">
                     <div class="accordion-body">
                         <div id="div_corrmatrix_svg"> </div>
                     </div>
@@ -327,11 +606,13 @@
             </div>
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingAnt">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAnt" aria-expanded="false" aria-controls="collapseAnt">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseAnt" aria-expanded="false" aria-controls="collapseAnt">
                         Муравьиный алгоритм
                     </button>
                 </h2>
-                <div id="collapseAnt" class="accordion-collapse collapse" aria-labelledby="headingAnt" data-bs-parent="#analysisAccordion">
+                <div id="collapseAnt" class="accordion-collapse collapse" aria-labelledby="headingAnt"
+                    data-bs-parent="#analysisAccordion">
                     <div class="accordion-body">
                         <!-- Секция для визуализации муравьиного алгоритма -->
                     </div>
@@ -339,11 +620,13 @@
             </div>
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingTree">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTree" aria-expanded="false" aria-controls="collapseTree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseTree" aria-expanded="false" aria-controls="collapseTree">
                         Результирующее дерево решений
                     </button>
                 </h2>
-                <div id="collapseTree" class="accordion-collapse collapse" aria-labelledby="headingTree" data-bs-parent="#analysisAccordion">
+                <div id="collapseTree" class="accordion-collapse collapse" aria-labelledby="headingTree"
+                    data-bs-parent="#analysisAccordion">
                     <div class="accordion-body">
                         <!-- Секция для отображения дерева решений -->
                     </div>
@@ -352,4 +635,5 @@
         </div>
     </div>
 </body>
+
 </html>
