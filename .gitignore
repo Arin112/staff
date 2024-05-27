@@ -1,2 +1,6 @@
 
 *.exe
+*.wav
+*.zip
+/topor/.vs
+/topor/.ipynb_checkpoints
