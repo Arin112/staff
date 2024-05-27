@@ -140,11 +140,50 @@
                              * @param {string} target_class - Название целевого класса.
                              */
                             function ant_algorithm(data, features, target_class){
+                                // Количество муравьёв и копируемых муравьёв
+                                var cnt_ants = 100, copy_ants = 10
+                                // Вероятности мутации
+                                var p_mutate_ch = 0.2, p_mutate_op_rate = 0.1
                                 // Очистка предыдущих результатов
                                 document.querySelector("#collapseAnt .accordion-body").innerHTML = "";
 
                                 // Развертывание аккордеона с муравьиным алгоритмом
                                 new bootstrap.Collapse(document.getElementById('collapseAnt'), { toggle: true });
+
+                                // Добавим слайдер для выбора количества муравьёв
+                                const slider_label = document.createElement("label");
+                                slider_label.id = "slider_label";
+                                slider_label.textContent = `Количество муравьёв: ${cnt_ants}`;
+                                document.querySelector("#collapseAnt .accordion-body").appendChild(slider_label);
+                                const slider = document.createElement("input");
+                                slider.type = "range";
+                                slider.min = 1;
+                                slider.max = 1000;
+                                slider.value = cnt_ants;
+                                slider.className = "form-range";
+                                slider.addEventListener("input", function () {
+                                    cnt_ants = Number(slider.value);
+                                    document.querySelector("#slider_label").textContent = `Количество муравьёв: ${cnt_ants}`;
+                                });
+                                document.querySelector("#collapseAnt .accordion-body").appendChild(slider);
+
+                                // Добавим слайдер для выбора количества копируемых муравьёв
+                                const slider_label_copy = document.createElement("label");
+                                slider_label_copy.id = "slider_label_copy";
+                                slider_label_copy.textContent = `Количество копируемых муравьёв: ${copy_ants}`;
+                                document.querySelector("#collapseAnt .accordion-body").appendChild(slider_label_copy);
+
+                                const slider_copy = document.createElement("input");
+                                slider_copy.type = "range";
+                                slider_copy.min = 1;
+                                slider_copy.max = 100;
+                                slider_copy.value = copy_ants;
+                                slider_copy.className = "form-range";
+                                slider_copy.addEventListener("input", function () {
+                                    copy_ants = Number(slider_copy.value);
+                                    document.querySelector("#slider_label_copy").textContent = `Количество копируемых муравьёв: ${copy_ants}`;
+                                });
+                                document.querySelector("#collapseAnt .accordion-body").appendChild(slider_copy);
 
                                 // Начнём муравьиный алгоритм
                                 var ants = []
@@ -174,7 +213,7 @@
                                 }
 
                                 const mutate_operation = (operation) => {
-                                    let new_threshold = operation.threshold + (Math.random()*0.1 - 0.05)
+                                    let new_threshold = operation.threshold + (Math.random()*p_mutate_op_rate - p_mutate_op_rate/2)
                                     if (new_threshold < 0){
                                         new_threshold = Math.random()
                                     }else if (new_threshold > 1){
@@ -185,7 +224,8 @@
 
                                 const mutate_ch = (ch) => {
                                     if (Math.random() > 0.95){
-                                        return make_ch(features[Math.floor(Math.random()*features.length)], ch.operation)
+                                        return make_ch(features[Math.floor(Math.random()*features.length)],
+                                                make_operation(Math.random(), Math.random() > 0.5))
                                     } else {
                                         return make_ch(ch.class, mutate_operation(ch.operation))
                                     }
@@ -206,14 +246,22 @@
                                         return {
                                             left: genome.left ? mutate_genome(genome.left) : genome.left,
                                             right: genome.right ? mutate_genome(genome.right) : genome.right,
-                                            ch: Math.random() > 0.2 ? mutate_ch(genome.ch) : genome.ch
+                                            ch: Math.random() > p_mutate_ch ? mutate_ch(genome.ch) : genome.ch
                                         }
                                     }
                                     else if (r < 0.95){
-                                        return {
-                                            left: Math.random() > 0.5 ? (genome.left ? null : create_genome()) : genome.left,
-                                            right: Math.random() > 0.5 ? (genome.right ? null : create_genome()) : genome.right,
-                                            ch: Math.random() > 0.2 ? mutate_ch(genome.ch) : genome.ch
+                                        if (Math.random() > 0.5){
+                                            return {
+                                                left: Math.random() > 0.5 ? (genome.left ? null : create_genome()) : genome.left,
+                                                right: genome.right,
+                                                ch: genome.ch
+                                            }
+                                        } else {
+                                            return {
+                                                left: genome.left,
+                                                right: Math.random() > 0.5 ? (genome.right ? null : create_genome()) : genome.right,
+                                                ch: genome.ch
+                                            }
                                         }
                                     }
                                     else {
@@ -278,8 +326,8 @@
                                     return ants.sort((a,b) => b.fitness - a.fitness).slice(0,n)
                                 }
                                 const sleep = ms => new Promise(r => setTimeout(r, ms));
-                                // Для теста запустим асинхронно популяцию из 1000 муравьёв и выведем их результаты, запустим по кнопке
-                                document.querySelector("#collapseAnt .accordion-body").innerHTML = "";
+
+                                // document.querySelector("#collapseAnt .accordion-body").innerHTML = "";
                                 const antButton = document.createElement("button");
                                 antButton.className = "btn btn-primary me-2";
                                 antButton.textContent = "Запустить муравьиный алгоритм";
@@ -287,14 +335,23 @@
                                 // создадим label для вывода результата
 
                                 antButton.addEventListener("click", async function () {
-                                    ants = create_ants(100)
-                                    let iter = 0;
+                                    stop_flag = false
+                                    ants = create_ants(cnt_ants)
+                                    let iter = 0, prev_best=0;
                                     while (!stop_flag){
-                                        
-                                        ants = select_ants(score_ants(ants), 10)
-                                        document.querySelector("#result_label").textContent = `Поколение ${iter++}: ${ants[0].fitness}`
-                                        for (let j = 0; j < 90; j++){
-                                            ants.push(mutate_ant(ants[j % 10]))
+                                        iter++
+                                        ants = select_ants(score_ants(ants), copy_ants)
+                                        if (prev_best < ants[0].fitness){
+                                            document.querySelector("#result_label").textContent = `Поколение ${iter}: ${ants[0].fitness}`
+                                            document.querySelector("#result_svg").innerHTML = ""
+                                            const svg = svg_from_genome(ants[0].genome)
+                                            const svgDiv = document.createElement("div");
+                                            document.querySelector("#result_svg").appendChild(svgDiv);
+                                            svgDiv.appendChild(svg);
+                                            prev_best = ants[0].fitness
+                                        }
+                                        for (let j = 0; j < cnt_ants - copy_ants; j++){
+                                            ants.push(mutate_ant(ants[j % copy_ants]))
                                         }
                                         
                                         await sleep(1)
@@ -308,10 +365,15 @@
                                     stop_flag = true
                                     console.log("Остановлено")
                                     await sleep(100)
-                                    console.log(ants)
+                                    // console.log(ants)
+                                    // Развернуть аккордеон с деревом решений
+                                    new bootstrap.Collapse(document.getElementById('collapseTree'), { toggle: true });
+                                    // Очистка предыдущих результатов
+                                    document.querySelector("#collapseTree .accordion-body").innerHTML = "";
+
                                     const svg = svg_from_genome(ants[0].genome)
                                     const svgDiv = document.createElement("div");
-                                    document.querySelector("#collapseAnt .accordion-body").appendChild(svgDiv);
+                                    document.querySelector("#collapseTree .accordion-body").appendChild(svgDiv);
                                     svgDiv.appendChild(svg);
 
                                 });
@@ -326,12 +388,20 @@
                                     document.querySelector("#result_label").textContent = ""
                                 }
 
+                                if (!document.querySelector("#result_svg")){
+                                    const result_label = document.createElement("div");
+                                    result_label.id = "result_svg"
+                                    document.querySelector("#collapseAnt .accordion-body").appendChild(result_label);
+                                }else{
+                                    document.querySelector("#result_svg").textContent = ""
+                                }
+
                             }
 
                             function svg_from_genome(genome){
-                                console.log(genome)
+                                // console.log(genome)
                                 function genome_to_dot(genome, parent_id = null, is_right = false){
-                                    console.log(genome)
+                                    // console.log(genome)
                                     const id = "id_"+Math.random().toString(36).substring(2, 15)
                                     const tr = (dataMaxs[genome.ch.class] - dataMins[genome.ch.class])*genome.ch.operation.threshold + dataMins[genome.ch.class]
                                     let dot = ""
@@ -344,22 +414,19 @@
                                     if (genome.left){
                                         dot += genome_to_dot(genome.left, id, false)
                                     } else {
-                                        dot += `${id}_left [label="${0}"];\n`
+                                        dot += `${id}_left [label="Рис Гонён"];\n`
                                         dot += `${id} -> ${id}_left [label="Нет"];\n`
                                     }
                                     if (genome.right){
                                         dot += genome_to_dot(genome.right, id, true)
                                     } else {
-                                        dot += `${id}_right [label="${1}"];\n`
+                                        dot += `${id}_right [label="Рис Жасмин"];\n`
                                         dot += `${id} -> ${id}_right [label="Да"];\n`
                                     }
                                     return dot
                                 }
-                                const dot = `digraph {
-                                    node [shape=box];
-                                    ${genome_to_dot(genome)}
-                                }`
-                                console.log(dot)
+                                const dot = `digraph {\nnode [shape=box];\n${genome_to_dot(genome)}}`
+                                // console.log(dot)
                                 const svg = document.createElement("div");
                                 d3.select(svg)
                                     .graphviz()
