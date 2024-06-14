@@ -205,12 +205,14 @@ int main() {
       std::cout << "Expected: " << random_string << std::endl;
       std::cout << "Got: " << decoded_string << std::endl;
       std::cout << "Base64: " << base64_string << std::endl;
+      return 1;
     }
     if (decoded_bitset != random_bitset) {
         std::cout << "Error in bitset" << std::endl;
         std::cout << "Expected: " << random_bitset << std::endl;
         std::cout << "Got: " << decoded_bitset << std::endl;
         std::cout << "Base64: " << base64_bitset << std::endl;
+        return 1;
     }
     
     if (std::equal(decoded_vector_bool.begin(), decoded_vector_bool.end(), random_vector_bool.begin()) == false){
@@ -226,10 +228,11 @@ int main() {
         }
         std::cout << std::endl;
         std::cout << "Base64: " << base64_vector_bool << std::endl;
+        return 1;
     }
   }
 
-  std::cout << "All test passed!" << std::endl;
+  std::cout << "All base64 test passed!" << std::endl;
 
   return 0;
 }

@@ -1,0 +1,11 @@
+# ./.clang-format file
+
+BasedOnStyle: LLVM
+
+# поправим макс ширину строки
+ColumnLimit: 120
+AlwaysBreakTemplateDeclarations: Yes
+
+# поправим отступы
+IndentWidth: 4
+UseTab: Never
