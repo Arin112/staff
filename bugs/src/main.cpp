@@ -73,7 +73,7 @@ void small_researchers(){
 
 void strange_researcher(){
     Researcher<21, 31> r;
-
+    
     r.show_maze();
 }
 
@@ -82,7 +82,7 @@ int main() {
     // remove saves folder
     // std::filesystem::remove_all("./saves");
 
-    small_researchers<36>();
+    // small_researchers<36>();
 
     return 0;
 }

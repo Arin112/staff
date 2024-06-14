@@ -298,7 +298,8 @@ class Researcher {
 
     std::pair<int, int> get_dimensions() { return std::make_pair(M, N); }
 
-    void iterate_mutation(std::function) {
+    
+    void iterate_mutation(std::function(size_t<M, N>())) {
 
     }
 
