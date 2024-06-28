@@ -213,35 +213,33 @@ void generate_solvable_maze(maze<M, N> m) {
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 template <crd M, crd N>
 size_t pass_maze(maze<M, N> m) {
-    int y = 1, x = 1;
+    int x = 1, y = 1;
     size_t steps = 0;
 
-    int dy[] = {1, 0, -1, 0};
-    int dx[] = {0, 1, 0, -1};
+    int dx[] = {1, 0, -1, 0};
+    int dy[] = {0, 1, 0, -1};
     int cur_direction = 0;
 
-    while (y != M - 2 || x != N - 2) {
-        ++m[y][x];
+    while (x != M - 2 || y != N - 2) {
+        m[x][y]++;
 
-        size_t min_visits = MIN(MIN(m[y + 1][x], m[y][x + 1]), MIN(m[y - 1][x], m[y][x - 1]));
+        size_t min_visits = MIN(MIN(m[x + 1][y], m[x][y + 1]), MIN(m[x - 1][y], m[x][y - 1]));
 
-        if (min_visits != m[y + dy[cur_direction]][x + dx[cur_direction]]) {
-            cur_direction = min_visits == m[y + 1][x]   ? 0
-                            : min_visits == m[y][x + 1] ? 1
-                            : min_visits == m[y - 1][x] ? 2
-                                                        : 3;
+        if (min_visits == m[x + dx[cur_direction]][y + dy[cur_direction]]) {
+            x = x + dx[cur_direction];
+            y = y + dy[cur_direction];
+        } else {
+            int min_direction = min_visits == m[x + 1][y]   ? 0
+                                : min_visits == m[x][y + 1] ? 1
+                                : min_visits == m[x - 1][y] ? 2
+                                                                  : 3;
+            x = x + dx[min_direction];
+            y = y + dy[min_direction];
+            cur_direction = min_direction;
         }
-
-        x += dx[cur_direction];
-        y += dy[cur_direction];
+        steps++;
     }
-
-    for (crd i = 1; i < M - 1; i++) {
-        for (crd j = 1; j < N - 1; j++) {
-            steps += m[i][j] < MX ? m[i][j] : 0;
-        }
-    }
-
+    // print_with_solidness(visited);
     return steps;
 }
 #undef MIN

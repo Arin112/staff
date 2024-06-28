@@ -16,6 +16,8 @@ template <crd M, crd N>
 class Researcher {
   public:
     maze<M, N> m;
+    constexpr static crd m_ = M;
+    constexpr static crd n_ = N;
     bool found_best_by_bruteforce;
     std::string uniq_id;
 
@@ -166,7 +168,7 @@ class Researcher {
     }
 
     // fast bruteforce
-    void threaded_find_best_bruteforce(size_t max_threads=12){
+    void threaded_find_best_bruteforce(size_t max_threads=12, bool show_progress=false){
         if (found_best_by_bruteforce) {
             return;
         }
@@ -193,11 +195,20 @@ class Researcher {
                 increment_maze<M, N>(current_maze); // shift to start position by thread_id
             }
 
+            auto time_start = std::chrono::high_resolution_clock::now();
+
             size_t iter = 0;
             do{
                 iter+=max_threads;
-                // std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b";
-                // std::cout << "Thread " << thread_id << " progress: " << (double(iter) / max_combinations) * 100. << "%     ";
+
+                if (show_progress && iter % 100000000 == 0) {
+                    auto now = std::chrono::high_resolution_clock::now();
+                    auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - time_start).count();
+                    auto progress = (double(iter) / max_combinations);
+                    auto time_left = (duration / progress) - duration;
+                    std::cout << "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b";
+                    std::cout << "Thread " << thread_id << " progress: " << (double(iter) / max_combinations) * 100. << "%; left " << time_left/3600. << " h         ";
+                }
                 if (iter > max_combinations) {
                     break;
                 }
@@ -299,8 +310,8 @@ class Researcher {
     std::pair<int, int> get_dimensions() { return std::make_pair(M, N); }
 
     
-    void iterate_mutation(std::function(size_t<M, N>())) {
-
+    void iterate_mutation(std::function<size_t(maze<M, N>)> f) {
+        MutationManager<21, 31> mm;
     }
 
     ~Researcher() {

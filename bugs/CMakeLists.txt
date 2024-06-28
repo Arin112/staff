@@ -27,8 +27,11 @@ set (RESEARCH_SOURCES
 
 # для Release сборки добавить все возможные оптимизации
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -mtune=native -fno-exceptions -fno-rtti -fno-stack-protector")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -mtune=native")
 endif()
+
+# для всех сборок убрать лиммит на размер стека
+# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--stack,100000000")
 
 add_executable(research ${RESEARCH_SOURCES})
 
