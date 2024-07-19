@@ -11,6 +11,7 @@ from ttkbootstrap import Style
 from tkinter import ttk
 import google.generativeai as genai
 from tkinter.messagebox import showerror, showwarning, showinfo
+from logger import logger
 
 class Application(tk.Tk):
     def __init__(self):
@@ -101,7 +102,6 @@ class Application(tk.Tk):
             showwarning("Внимание", "Ответы на русском языке существенно дороже из-за особенностей токенизации!")
     
     def send_raw(self):
-        print("Send raw data:")
         # current_config = self.frame.gen_ai_configurator.get_subclass_instance().get_current_config()
         system_instructions = self.get_system_instructions()
         prompt_postfix = self.get_prompt_postfix()
@@ -146,9 +146,13 @@ class Application(tk.Tk):
         # self.frame.html_frame.load_html(md.markdown(self.frame.command_frame.text.get('1.0', tk.END)))
         # self.frame.html_frame.insert(tk.END, self.frame.command_frame.text.get('1.0', tk.END))
 
-        print("Log data:")
-        print(self.frame.gen_ai_configurator.get_subclass_instance().get_current_config())
-        print(self.frame.file_manager.get_subclass_instance().get_selected_files())
+        # print("Log data:")
+        # print(self.frame.gen_ai_configurator.get_subclass_instance().get_current_config())
+        # print(self.frame.file_manager.get_subclass_instance().get_selected_files())
+
+        logger.log("Log data:")
+        logger.log(self.frame.gen_ai_configurator.get_subclass_instance().get_current_config())
+        logger.log(self.frame.file_manager.get_subclass_instance().get_selected_files())
 
 if __name__ == "__main__":
 

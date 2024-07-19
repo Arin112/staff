@@ -1,6 +1,7 @@
 import configparser
 import os
 import json
+from logger import logger
 
 class ConfigManager:
     def __init__(self, filepath='app_config.ini', default_section='UserPreferences'):
@@ -11,6 +12,11 @@ class ConfigManager:
         # Загрузка конфигурации, если файл существует
         if os.path.exists(filepath):
             self.config.read(filepath)
+            logger.log(f"Конфигурация загружена из файла {filepath}")
+            logger.log(f"Секции: {self.config.sections()}")
+            logger.log(f"Опции: {self.config.options(default_section)}")
+        else:
+            logger.log(f"Файл конфигурации {filepath} не существует, создана новая конфигурация")
 
     def set_section(self, section):
         """Установка текущей секции для работы."""

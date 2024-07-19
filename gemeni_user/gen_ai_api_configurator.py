@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import google.generativeai as genai
+from logger import logger
 
 genai_configured = False
 
@@ -82,27 +83,40 @@ class GenAIAPIConfigurator(tk.Frame):
             'top_p': self.top_p_entry.get()
         }
         return result
+    
+    def is_configured(self):
+        global genai_configured
+        return genai_configured
 
     def on_api_key_change(self, event=None):
 
         if len(self.api_key_entry.get()) != 39:
             self.api_key_entry.config(bg='red')
+            global genai_configured
+            genai_configured = False
             return
 
         genai.configure(api_key=self.api_key_entry.get())
 
         if not check_api_key():
             self.api_key_entry.config(bg='red')
+            global genai_configured
+            genai_configured = False
+            logger.log("GenAI API not configured")
         else:
             self.api_key_entry.config(bg='lightgreen')
             global genai_configured
             genai_configured = True
-            self.after_update_api_key()
+            logger.log("GenAI API configured ok")
 
         self.after_update_api_key()
 
     def after_update_api_key(self):
         self.available_models = list_models()
+        logger.log(f"Available models: {self.available_models}")
+        # filter available_models
+        self.available_models = [m for m in self.available_models if m.startswith('gemini-1.5')]
+        logger.log(f"Filtered models: {self.available_models}")
         self.model_dropdown['values'] = self.available_models
         self.model_var.set(self.available_models[0] if self.available_models else '')
 
