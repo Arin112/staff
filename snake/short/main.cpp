@@ -1,5 +1,15 @@
 #include <iostream>
 #include <vector>
+#include <memory>
+
+class Block {
+  public:
+    using BlockID = int;
+    BlockID type_;
+    static BlockID next_id;
+
+    Block(BlockID type) : type_(type) {}
+};
 
 class XY {
   public:
@@ -37,7 +47,15 @@ class Renderable {
     virtual ~Renderable() = default;
 };
 
-class Snake : public Renderable{
+class CollisionObject {
+  public:
+    virtual bool collides(const XY &pos) = 0;
+    virtual bool collides(const CollisionObject &other) = 0;
+    virtual std::vector<XY> get_collision_points() = 0;
+    virtual ~CollisionObject() = default;
+};
+
+class Snake : public Renderable, public CollisionObject {
   public:
     std::vector<XY> body;
     XY direction;
@@ -55,15 +73,24 @@ class Snake : public Renderable{
         return false;
     }
 
-    // false if snake dies
-    bool step(){
-
-    }
+    void step() {}
 };
 
-class Food {
+class Food : public Renderable, public CollisionObject {
   public:
     XY pos;
+};
+
+// mainly for borders, but can be used for any walls
+class Walls : public Renderable, public CollisionObject {
+  public:
+    std::vector<XY> walls;
+};
+
+
+class CollosionField {
+    std::vector<std::vector<Block>> arr;
+    std::vector<std::weak_ptr<CollisionObject>> objects;
 };
 
 class Field {
@@ -77,20 +104,15 @@ class Field {
           arr(width, std::vector<Blocks>(height, EMPTY)) {}
 };
 
-class Game{};
+class Game {};
 
-class ControllerBase{
+class ControllerBase {
     virtual XY getDirection() = 0;
     virtual ~ControllerBase() = default;
 };
 
-class ControllerKeyboard : public ControllerBase{
-    XY getDirection() override {
-        return XY();
-    }
+class ControllerKeyboard : public ControllerBase {
+    XY getDirection() override { return XY(); }
 };
 
-int main() {
-
-    return 0;
-}
+int main() { return 0; }
